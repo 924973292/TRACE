@@ -1,4 +1,23 @@
 .DS_Store
+.vscode/
+.idea/
+
+# Local paper source is not published in this repository
+*.tex
+*.sty
+*.bst
+*.bib
+*.pdf
+figures/
+sections/
+tables/
+main_arxiv.pdf
+main_arxiv.aux
+main_arxiv.bbl
+main_arxiv.blg
+main_arxiv.log
+main_arxiv.out
+main_arxiv.synctex.gz
 *.aux
 *.bbl
 *.blg
@@ -16,5 +35,3 @@
 *.bcf
 *.run.xml
 _minted*
-.vscode/
-.idea/
