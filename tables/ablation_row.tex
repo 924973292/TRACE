@@ -1,0 +1,67 @@
+\begin{table}[t]
+    \centering
+    \begin{minipage}[t]{0.545\textwidth}
+        \centering
+        \caption{Module ablation with \textbf{GUI-Owl-1.5-8B}. Rows without \nwe{} select by top-$k$ over the prior.}
+        \label{tab:ablation-main}
+        \adjustbox{max width=\linewidth}{%
+            \footnotesize
+            \setlength{\tabcolsep}{3.5pt}
+            \renewcommand{\arraystretch}{1.0}
+            \begin{tabular}{ccc cccc}
+                \toprule
+                \lmp{} & \nwe{} & \awc{} & \textbf{SS-v2} & \textbf{SS-Pro} & \textbf{OmniGUI} & \textbf{Mind2Web} \\
+                \midrule
+                \rowcolor{headergray}\multicolumn{7}{c}{\textsc{Mild budgets ($50\%/10\%$, SS-v2 $\keepr{=}10\%$, SS-Pro $\keepr{=}25\%$)}} \\
+                \cmark &  &  & 32.63 & 41.94 & 40.94 & 41.75 \\
+                 & \cmark &  & 36.48 & 42.19 & 45.88 & 34.31 \\
+                \cmark & \cmark &  & \underline{56.45} & \underline{56.29} & \underline{47.43} & \underline{43.92} \\
+                \rowcolor{rowblue}\cmark & \cmark & \cmark & \textbf{73.90} & \textbf{58.25} & \textbf{48.91} & \textbf{45.52} \\
+                \midrule
+                \rowcolor{headergray}\multicolumn{7}{c}{\textsc{Tight budgets ($25\%/5\%$, SS-v2 $\keepr{=}5\%$, SS-Pro $\keepr{=}10\%$)}} \\
+                \cmark &  &  & 17.06 & 14.55 & 30.33 & 25.43 \\
+                 & \cmark &  & 18.32 & 13.73 & 36.39 & 14.31 \\
+                \cmark & \cmark &  & \underline{38.36} & \underline{28.15} & \underline{39.46} & \underline{27.79} \\
+                \rowcolor{rowblue}\cmark & \cmark & \cmark & \textbf{55.19} & \textbf{37.63} & \textbf{43.08} & \textbf{34.20} \\
+                \bottomrule
+            \end{tabular}
+        }
+    \end{minipage}\hfill
+    \begin{minipage}[t]{0.425\textwidth}
+        \centering
+        \caption{Factor ablation inside \nwe{}.}
+        \label{tab:ablation-neo}
+        \adjustbox{max width=\linewidth}{%
+            \footnotesize
+            \setlength{\tabcolsep}{4pt}
+            \renewcommand{\arraystretch}{1.3}
+            \begin{tabular}{l cccc}
+                \toprule
+                \textbf{Removed} &\textbf{SS-v2} & \textbf{SS-Pro} & \textbf{OmniGUI} & \textbf{Mind2Web} \\
+                \midrule
+                $-$ prior & $-23.74$ & $-16.50$ & $-5.64$ & $-15.50$ \\
+                $-$ diversity & $-5.35$ & $-4.74$ & $-2.64$ & $-1.98$ \\
+                $-$ instruction & $-15.57$ & $-14.16$ & $-4.12$ & $-1.39$ \\
+                \bottomrule
+            \end{tabular}
+        }
+        \par\vspace{8pt}
+        \caption{Ordering ablation inside \nwe{}.}
+        \label{tab:ablation-neoform}
+        \adjustbox{max width=\linewidth}{%
+            \footnotesize
+            \setlength{\tabcolsep}{6pt}
+            \renewcommand{\arraystretch}{1.1}
+            \begin{tabular}{l cc}
+                \toprule
+                \textbf{Substituted rule} & \textbf{SS-v2} & \textbf{SS-Pro} \\
+                \midrule
+                $2\log a_j+\log d_j^2$ & $-10.53$ & $-3.61$ \\
+                log-mean-exp pooling & $-8.49$ & $-6.45$ \\
+                mean query row only & $-8.81$ & $-5.63$ \\
+                \bottomrule
+            \end{tabular}
+        }
+    \end{minipage}
+    \vspace{-2mm}
+\end{table}

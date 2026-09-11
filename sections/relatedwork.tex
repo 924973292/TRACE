@@ -1,0 +1,54 @@
+\section{Related Work}
+\label{sec:related}
+\subsection{Efficient GUI Agents}
+GUI agents ground actions in an accumulating stream of high-resolution screenshots~\citep{hong2024cogagent,guiowl2025}, inflating both computation and memory.
+%
+Existing methods fall into \textit{training-based designs} and \textit{training-free designs}.
+%
+\textbf{Training-based Designs.}
+This paradigm learns cheaper perception by retraining the architecture or the history policy.
+%
+For example, CogAgent~\citep{hong2024cogagent} couples a low-resolution backbone with a high-resolution cross-attention module.
+%
+ReVision~\citep{abaskohi2026revision} learns to cut temporal visual redundancy along the trajectory.
+%
+While effective, these designs demand extra training compute, and the learned efficiency cannot transfer across architectures.
+%
+These costs motivate training-free designs on frozen models.
+%
+\textbf{Training-free Designs.}
+Training-free methods cut cost on a frozen model via \textit{input-side} pruning or \textit{cache-side} compression.
+%
+On the \textit{input side}, AQuaUI~\citep{li2026aquaui} partitions screenshots with adaptive quadtrees, and related methods prune high-resolution screens or historical frames by spatio-temporal cues~\citep{xu2026guipruner,histprune2026}.
+%
+On the \textit{cache side}, GUI-KV~\citep{huang2025guikv} combines spatial saliency with temporal redundancy scoring.
+%
+ST-Lite~\citep{zhou2026stlite} couples component-centric saliency with trajectory-aware gating.
+%
+Despite these improvements, keeps are re-scored at every step, so adjacent keeps need not nest and a retired frame must be re-encoded or re-ranked.
+%
+In contrast, \method{} admits a nested keep once and contracts it as monotone session state efficiently.
+\subsection{Visual Token Pruning}
+Visual token pruning accelerates MLLM inference by removing redundant visual tokens, and existing methods either discard native tokens directly or aggregate them into synthetic ones.
+%
+\textbf{Pruning-based Methods.}
+FastV~\citep{chen2024fastv} ranks visual tokens by attention statistics inside the language model.
+%
+DivPrune~\citep{alvar2025divprune} emphasizes feature dispersion to reduce redundancy.
+%
+CDPruner~\citep{zhang2025cdpruner} selects tokens that are both diverse and relevant to the instruction.
+%
+Nevertheless, selection discards tokens irreversibly, which motivates token merging as an alternative paradigm.
+%
+\textbf{Merging-based Methods.}
+This paradigm aggregates discarded patches into compact synthetic summaries.
+%
+VisionZip~\citep{yang2025visionzip} merges visual tokens to extend the effective context length.
+%
+PruMerge+~\citep{shang2025prumerge} combines pruning with merging to adapt the visual token count.
+%
+Although effective, the selections of both paradigms drift across steps and demand rows that a contracted cache no longer holds.
+%
+Moreover, neither is tailored to GUI streams, where score-driven keeps collapse onto a few salient regions and sacrifice the spatial coverage that dense interfaces require.
+%
+In contrast, \method{} injects an interaction prior before prefill, repairs the spatial collapse at admission, and contracts the admitted keep into monotone session state for efficient serving.

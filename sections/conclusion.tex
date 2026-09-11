@@ -1,0 +1,17 @@
+\section{Conclusion}
+\label{sec:conclusion}
+In this paper, we study visual token pruning for efficient GUI agents under a reusable lifecycle.
+%
+We show that cache reuse turns pruning into an irreversible write-time commitment, so a selector must admit a nested order that remains useful before future grounding demands are known and that preserves spatial coverage under tight budgets.
+%
+To this end, we propose \textbf{\method{}}, a training-free framework for efficient GUI agents.
+%
+Specifically, we leverage Layout-derived Interaction Prior (\lmp{}) to derive a query-independent interaction prior from the interface layout.
+%
+Then, we employ Nested Evidence Ordering (\nwe{}) to couple that prior with instruction and feature novelty into one nested order.
+%
+Building upon this, we adopt Native-token Coverage Repair (\awc{}) to restore spatial coverage with native tokens while preserving nesting.
+%
+Finally, we propose Monotone KV Contraction (\kvr{}), which contracts retired frames into reusable session state without re-encoding.
+%
+Extensive experiments across diverse settings demonstrate the effectiveness and efficiency of \method{}.

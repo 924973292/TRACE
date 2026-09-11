@@ -1,0 +1,26 @@
+\begin{table}[t]
+    \centering
+    \caption{Layout prior comparison with \textbf{GUI-Owl-1.5-8B} on ScreenSpot-v2.}
+    \label{tab:layout-prior}
+    \adjustbox{max width=\textwidth,center}{%
+        \footnotesize
+        \renewcommand{\arraystretch}{0.9}
+        \begin{tabular}{l c c c c c c}
+            \toprule
+            \textbf{Selector} & \textbf{Budget} & \textbf{Own rule} & \textbf{+ prior} & \textbf{Best }$\alpha$ & \textbf{Transfer (pp)} & \textbf{Gap to \method{} (pp)} \\
+            \midrule
+            PruneSID  & $10\%$ & $58.96\%$ & $60.53\%$ & $8$  & $+1.57$  & $13.37$ \\
+            PruneSID  & $5\%$  & $34.20\%$ & $34.36\%$ & $8$  & $+0.16$  & $20.83$ \\
+            DivPrune  & $10\%$ & $51.97\%$ & $54.95\%$ & $2$  & $+2.98$  & $18.95$ \\
+            DivPrune  & $5\%$  & $25.71\%$ & $29.72\%$ & $2$  & $+4.01$  & $25.47$ \\
+            VisPruner & $10\%$ & $51.73\%$ & $49.29\%$ & $2$  & $-2.44$  & $24.61$ \\
+            VisPruner & $5\%$  & $20.68\%$ & $30.35\%$ & $16$ & $+9.67$  & $24.84$ \\
+            CDPruner  & $10\%$ & $33.18\%$ & $47.09\%$ & $2$  & $+13.91$ & $26.81$ \\
+            CDPruner  & $5\%$  & $15.88\%$ & $27.99\%$ & $2$  & $+12.11$ & $27.20$ \\
+            \midrule
+            Prior-only top-$k$ & $10\%$ & \text{N/A} & $32.63\%$ & \text{N/A} & \text{N/A} & $41.27$ \\
+            Prior-only top-$k$ & $5\%$ & \text{N/A} & $17.06\%$ & \text{N/A} & \text{N/A} & $38.13$ \\
+            \bottomrule
+        \end{tabular}
+    }
+\end{table}

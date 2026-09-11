@@ -1,0 +1,35 @@
+\begin{table}[t]
+    \centering
+    \caption{One global configuration compared with the per-benchmark-budget configuration. Fixed uses $\alpha{=}2$ and the default current dose. Selected uses the adopted cap, calibration mode and doses.}
+    \label{tab:global-fixed}
+    \adjustbox{max width=0.86\textwidth,center}{%
+        \footnotesize
+        \setlength{\tabcolsep}{7pt}
+        \renewcommand{\arraystretch}{1.2}
+        \begin{tabular}{llccc}
+            \toprule
+            \textbf{Benchmark (metric)} & \textbf{Budget} & \textbf{Fixed} & \textbf{Selected} & $\Delta$ \\
+            \midrule
+            \rowcolor{headergray}\multicolumn{5}{c}{\textsc{Single-step (grounding / choice accuracy)}} \\
+            ScreenSpot-v2 (Acc) & $\keepr{=}50\%$ & 92.85 & 93.08 & $+0.23$ \\
+            ScreenSpot-v2 (Acc) & $\keepr{=}10\%$ & 73.66 & 73.90 & $+0.24$ \\
+            ScreenSpot-Pro (Acc) & $\keepr{=}10\%$ & 35.80 & 37.63 & $+1.83$ \\
+            MMBench-GUI L2 (Acc) & $\keepr{=}25\%$ & 71.09 & 72.45 & $+1.36$ \\
+            MMBench-GUI L2 (Acc) & $\keepr{=}10\%$ & 48.86 & 50.47 & $+1.61$ \\
+            MMBench-GUI L2 (Acc) & $\keepr{=}5\%$ & 31.19 & 30.88 & $-0.31$ \\
+            \midrule
+            \rowcolor{headergray}\multicolumn{5}{c}{\textsc{Multi-step (Step~SR)}} \\
+            OmniGUI (Step~SR) & $\keepc{=}50\%$ & 48.25 & 48.91 & $+0.66$ \\
+            OmniGUI (Step~SR) & $\keepc{=}25\%$ & 42.65 & 43.08 & $+0.43$ \\
+            Mind2Web Cross-Task (Step SR) & $\keepc{=}50\%$ & 45.72 & 46.86 & $+1.14$ \\
+            Mind2Web Cross-Task (Step~SR) & $\keepc{=}25\%$ & 32.22 & 33.96 & $+1.74$ \\
+            Mind2Web Cross-Domain (Step~SR) & $\keepc{=}50\%$ & 44.28 & 45.22 & $+0.94$ \\
+            Mind2Web Cross-Domain (Step~SR) & $\keepc{=}25\%$ & 32.86 & 34.59 & $+1.73$ \\
+            Mind2Web Cross-Website (Step~SR) & $\keepc{=}50\%$ & 43.93 & 44.75 & $+0.82$ \\
+            Mind2Web Cross-Website (Step~SR) & $\keepc{=}25\%$ & 30.01 & 32.99 & $+2.98$ \\
+            AndroidControl (Step~SR) & $\keepc{=}50\%$ & 59.60 & 60.20 & $+0.60$ \\
+            AndroidControl (Step~SR) & $\keepc{=}25\%$ & 52.97 & 57.06 & $+4.09$ \\
+            \bottomrule
+        \end{tabular}
+    }
+\end{table}

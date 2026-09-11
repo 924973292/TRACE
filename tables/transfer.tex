@@ -1,0 +1,31 @@
+\begin{table}[t]
+    \centering
+    \caption{Paradigm-transfer comparison with \textbf{GUI-Owl-1.5-8B}.}
+    \label{tab:transfer}
+    \adjustbox{max width=0.92\textwidth,center}{%
+        \footnotesize
+        \setlength{\tabcolsep}{6pt}
+        \renewcommand{\arraystretch}{0.98}
+        \begin{tabular}{ll cc cc}
+            \toprule
+            & & \multicolumn{2}{c}{\textbf{OmniGUI (Step~SR)}} & \multicolumn{2}{c}{\textbf{Mind2Web (Step~SR)}} \\
+            \cmidrule(lr){3-4}\cmidrule(lr){5-6}
+            \textbf{Selector} & \textbf{Serving path} & mild & tight & mild & tight \\
+            \midrule
+            \rowcolor{rowblue}\textbf{\method{}} & \kvr{} (ours) & \textbf{48.91} & \textbf{43.08} & \textbf{45.52} & \textbf{34.20} \\
+            \midrule
+            DivPrune & native re-prefill & 45.76 & 37.17 & 40.69 & 24.28 \\
+            & \kvr{} (ported) & 46.27 & 35.58 & 40.51 & 24.58 \\
+            & \emph{margin of \method{}} & $+2.64$ & $+7.50$ & $+5.01$ & $+9.62$ \\
+            \midrule
+            VisPruner & native re-prefill & 46.11 & 39.54 & 44.45 & 30.67 \\
+            & \kvr{} (ported) & 46.89 & 39.85 & 44.57 & 30.66 \\
+            & \emph{margin of \method{}} & $+2.02$ & $+3.23$ & $+0.95$ & $+3.54$ \\
+            \midrule
+            ZOO-Prune & native re-prefill & 48.17 & 40.01 & 44.98 & 27.90 \\
+            & \kvr{} (ported) & 47.51 & 39.42 & 44.64 & 28.31 \\
+            & \emph{margin of \method{}} & $+1.40$ & $+3.66$ & $+0.88$ & $+5.89$ \\
+            \bottomrule
+        \end{tabular}
+    }
+\end{table}

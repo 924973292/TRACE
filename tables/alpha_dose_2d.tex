@@ -1,0 +1,21 @@
+\begin{table}[t]
+    \centering
+    \caption{Interaction of prior strength $\bar{\alpha}$ and current dose $\rhocur$ on Mind2Web Cross-Task Step~SR.}
+    \label{tab:alpha-dose-2d}
+    \adjustbox{max width=0.86\textwidth,center}{%
+        \footnotesize
+        \setlength{\tabcolsep}{8pt}
+        \renewcommand{\arraystretch}{0.98}
+        \begin{tabular}{lcccccc}
+            \toprule
+            & \multicolumn{3}{c}{$\keepc{=}50\%$} & \multicolumn{3}{c}{$\keepc{=}25\%$} \\
+            \cmidrule(lr){2-4}\cmidrule(lr){5-7}
+            & $\rhocur{=}0$ & $\rhocur{=}0.3$ & $\rhocur{=}0.5$ & $\rhocur{=}0$ & $\rhocur{=}0.3$ & $\rhocur{=}0.5$ \\
+            \midrule
+            $\bar{\alpha}{=}1$ & 43.23 & 43.43 & 43.68 & 28.04 & 29.23 & 31.18 \\
+            $\bar{\alpha}{=}2$ & 45.37 & 45.72 & 45.22 & 32.27 & 32.22 & 30.18 \\
+            $\bar{\alpha}{=}4$ & 45.42 & 45.32 & \textbf{46.22} & \textbf{33.81} & 32.27 & 32.57 \\
+            \bottomrule
+        \end{tabular}
+    }
+\end{table}

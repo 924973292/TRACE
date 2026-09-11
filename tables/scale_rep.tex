@@ -1,0 +1,34 @@
+\begin{table}[t]
+    \centering
+    \caption{Cross-scale replication with \textbf{GUI-Owl-1.5-2B}. Spearman $\rho$ between the 8B and 2B method orderings on each grid, with the rank of \method{} at both scales.}
+    \label{tab:scale-rep}
+    \small
+    \begin{tabular}{ll ccc c}
+        \toprule
+        \textbf{Benchmark} & \textbf{Budget} & \textbf{\#Methods} & \textbf{Spearman $\rho$} & \textbf{Rank@8B} & \textbf{Rank@2B} \\
+        \midrule
+        ScreenSpot-v2 & $r{=}50\%$ & 12 & 0.698 & 1 & 1 \\
+        ScreenSpot-v2 & $r{=}25\%$ & 12 & 0.545 & 1 & 1 \\
+        ScreenSpot-v2 & $r{=}10\%$ & 12 & 0.503 & 1 & 1 \\
+        ScreenSpot-v2 & $r{=}5\%$ & 12 & 0.329 & 1 & 1 \\
+        ScreenSpot-Pro & $r{=}50\%$ & 12 & 0.874 & 4 & 4 \\
+        ScreenSpot-Pro & $r{=}25\%$ & 12 & 0.867 & 3 & 3 \\
+        ScreenSpot-Pro & $r{=}10\%$ & 12 & 0.706 & 2 & 1 \\
+        ScreenSpot-Pro & $r{=}5\%$ & 12 & 0.701 & 1 & 1 \\
+        MMBench-GUI L2 & $r{=}50\%$ & 12 & 0.689 & 4 & 1 \\
+        MMBench-GUI L2 & $r{=}25\%$ & 12 & 0.524 & 1 & 1 \\
+        MMBench-GUI L2 & $r{=}10\%$ & 12 & 0.109 & 1 & 1 \\
+        MMBench-GUI L2 & $r{=}5\%$ & 12 & 0.091 & 1 & 1 \\
+        OmniGUI & $c{=}50\%$, $h{=}10\%$ & 12 & 0.488 & 1 & 1 \\
+        OmniGUI & $c{=}25\%$, $h{=}5\%$ & 12 & 0.336 & 1 & 1 \\
+        Mind2Web Cross-Task & $c{=}50\%$, $h{=}10\%$ & 12 & 0.559 & 1 & 4 \\
+        Mind2Web Cross-Task & $c{=}25\%$, $h{=}5\%$ & 12 & 0.399 & 1 & 2 \\
+        Mind2Web Cross-Domain & $c{=}50\%$, $h{=}10\%$ & 12 & 0.664 & 2 & 4 \\
+        Mind2Web Cross-Domain & $c{=}25\%$, $h{=}5\%$ & 12 & 0.594 & 1 & 2 \\
+        Mind2Web Cross-Website & $c{=}50\%$, $h{=}10\%$ & 12 & 0.694 & 1 & 4 \\
+        Mind2Web Cross-Website & $c{=}25\%$, $h{=}5\%$ & 12 & 0.308 & 1 & 3 \\
+        AndroidControl & $c{=}50\%$, $h{=}10\%$ & 12 & 0.716 & 1 & 4 \\
+        AndroidControl & $c{=}25\%$, $h{=}5\%$ & 12 & 0.445 & 4 & 2 \\
+        \bottomrule
+    \end{tabular}
+\end{table}

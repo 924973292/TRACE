@@ -1,0 +1,46 @@
+\begin{table}[t]
+    \centering
+    \caption{Per-metric breakdown of multi-step agents with \textbf{GUI-Owl-1.5-8B} under the mild ($\keepc{=}50\%$, $\keeph{=}10\%$) and tight ($\keepc{=}25\%$, $\keeph{=}5\%$) budgets. The dataset-specific columns retain each benchmark's native auxiliary metrics, including action type, element accuracy, operation F1, and grounding.}
+    \label{tab:main-multi}
+    \adjustbox{max width=\textwidth,max totalheight=0.70\textheight,center}{%
+        \scriptsize
+        \setlength{\tabcolsep}{4.5pt}
+        \renewcommand{\arraystretch}{0.96}
+        \begin{tabular}{l cc ccc ccc c}
+            \toprule
+            & \multicolumn{2}{c}{\textbf{OmniGUI}} & \multicolumn{3}{c}{\textbf{Mind2Web}} & \multicolumn{3}{c}{\textbf{AndroidControl}} & \\
+            \cmidrule(lr){2-3}\cmidrule(lr){4-6}\cmidrule(lr){7-9}
+            \textbf{Method} & Type & \textbf{Step~SR} & Ele.Acc & Op.F1 & \textbf{Step~SR} & Type & Ground. & \textbf{Step~SR} & \textbf{Avg.\,(\%)} \\
+            \midrule
+            \rowcolor{headergray}\multicolumn{10}{c}{\textsc{GUI-Owl-1.5-8B: Upper Bound (100\% Tokens)}} \\
+            GUI-Owl-1.5-8B & 70.65 & 52.45 & 61.80 & 83.82 & 52.90 & 83.57 & 74.41 & 60.41 & 100.0\% \\
+            \rowcolor{headergray}\multicolumn{10}{c}{\textsc{Retain 50\% Current $+$ 10\% History Tokens}} \\
+            Random & 66.37 & 43.16 & 42.28 & 84.13 & 35.13 & 82.65 & 70.02 & 58.82 & 82.0\% \\
+            Uniform & 66.87 & 46.11 & 47.48 & 84.35 & 39.65 & 82.82 & 69.50 & 59.08 & 86.9\% \\
+            DivPrune\pub{(CVPR25)\cite{alvar2025divprune}} & 66.91 & 45.76 & 48.44 & 84.54 & 40.70 & 82.40 & 70.80 & 58.83 & 87.2\% \\
+            CDPruner\pub{(NeurIPS25)\cite{zhang2025cdpruner}} & 63.96 & 41.45 & 33.02 & 83.13 & 27.88 & 80.65 & 66.42 & 54.57 & 74.0\% \\
+            VisPruner\pub{(ICCV25)\cite{zhang2025vispruner}} & 66.45 & 46.11 & 52.58 & 84.09 & 44.45 & 83.04 & 73.06 & 59.25 & 90.0\% \\
+            PruMerge+\pub{(ICCV25)\cite{shang2025prumerge}} & 66.17 & 46.50 & 49.48 & 83.95 & 41.53 & 83.18 & \textbf{73.22} & 59.28 & 88.4\% \\
+            TRIM\pub{(COLING25)\cite{song2025trim}} & 65.40 & 45.84 & 48.78 & 84.06 & 41.20 & 82.18 & 70.18 & 56.86 & 86.5\% \\
+            FastV\pub{(ECCV24)\cite{chen2024fastv}} & 66.91 & 46.89 & 50.62 & 84.32 & 43.12 & 83.10 & \underline{73.13} & 59.11 & 89.6\% \\
+            VisionTrim\pub{(ICLR26)\cite{yu2026visiontrim}} & 65.47 & 45.72 & 51.83 & 83.60 & 43.91 & \textbf{83.50} & 72.45 & 59.10 & 89.3\% \\
+            ZOO-Prune\pub{(CVPR26)\cite{kim2026zooprune}} & \underline{67.34} & \underline{48.17} & \underline{52.96} & 84.06 & \underline{44.98} & 83.12 & 72.72 & 59.30 & \underline{91.7\%} \\
+            PruneSID\pub{(ICLR26)\cite{fang2026prunesid}} & \underline{67.34} & 47.40 & 51.51 & 84.15 & 43.28 & \underline{83.47} & 72.61 & \underline{59.52} & 90.2\% \\
+            \rowcolor{rowblue}\textbf{\method{}} & \textbf{68.62} & \textbf{48.91} & \textbf{53.02} & 84.28 & \textbf{45.52} & 83.44 & 72.74 & \textbf{60.20} & \textbf{93.0\%} \\
+            \rowcolor{headergray}\multicolumn{10}{c}{\textsc{Retain 25\% Current $+$ 5\% History Tokens}} \\
+            Random & 62.44 & 34.25 & 23.39 & 83.14 & 18.43 & 79.93 & 58.86 & 52.07 & 62.1\% \\
+            Uniform & \underline{64.66} & 38.96 & 26.32 & 83.49 & 20.61 & 81.38 & 63.77 & \underline{56.13} & 68.7\% \\
+            DivPrune\pub{(CVPR25)\cite{alvar2025divprune}} & 63.72 & 37.17 & 29.95 & 83.72 & 24.29 & 80.92 & 63.53 & 54.75 & 69.1\% \\
+            CDPruner\pub{(NeurIPS25)\cite{zhang2025cdpruner}} & 57.50 & 27.76 & 12.55 & 81.61 & 10.86 & 72.42 & 41.98 & 40.90 & 47.1\% \\
+            VisPruner\pub{(ICCV25)\cite{zhang2025vispruner}} & 62.99 & 39.54 & \underline{37.20} & 83.83 & \underline{30.67} & 81.55 & \underline{67.36} & 54.93 & \underline{74.8\%} \\
+            PruMerge+\pub{(ICCV25)\cite{shang2025prumerge}} & 62.52 & 36.98 & 29.38 & 83.20 & 23.45 & 81.44 & 66.21 & 54.01 & 68.1\% \\
+            TRIM\pub{(COLING25)\cite{song2025trim}} & 60.61 & 34.37 & 28.17 & 83.96 & 23.01 & 78.67 & 53.74 & 47.17 & 62.4\% \\
+            FastV\pub{(ECCV24)\cite{chen2024fastv}} & 61.47 & 39.39 & 34.48 & 83.26 & 29.33 & \underline{81.58} & 66.81 & 54.61 & 73.6\% \\
+            VisionTrim\pub{(ICLR26)\cite{yu2026visiontrim}} & 61.78 & 38.26 & 36.56 & 83.38 & 30.20 & 81.26 & \textbf{67.76} & 55.16 & 73.8\% \\
+            ZOO-Prune\pub{(CVPR26)\cite{kim2026zooprune}} & 64.19 & 40.01 & 34.17 & 84.10 & 27.90 & 81.34 & 67.05 & 55.76 & 73.8\% \\
+            PruneSID\pub{(ICLR26)\cite{fang2026prunesid}} & 64.27 & \underline{40.09} & 33.88 & 84.01 & 27.57 & 81.44 & 66.45 & 55.46 & 73.5\% \\
+            \rowcolor{rowblue}\textbf{\method{}} & \textbf{66.52} & \textbf{43.08} & \textbf{39.41} & 83.90 & \textbf{34.20} & \textbf{82.06} & 65.50 & \textbf{57.06} & \textbf{80.4\%} \\
+            \bottomrule
+        \end{tabular}
+    }
+\end{table}

@@ -1,0 +1,55 @@
+%%%% OPPO-inspired technical-report appearance.
+%%%% This file changes visual treatment only. It does not set page geometry,
+%%%% text dimensions, paragraph spacing, or float spacing.
+
+\RequirePackage{xcolor}
+\RequirePackage{microtype}
+
+\definecolor{oppoGreen}{HTML}{0B6248}
+\definecolor{oppoInk}{HTML}{202124}
+
+% Use a restrained technical-report label and a thin black rule.
+\makeatletter
+\newcommand{\traceHeaderLabel}{%
+  \fontfamily{phv}\fontseries{m}\selectfont
+  \fontsize{8.5}{10}\selectfont
+  \color{oppoGreen}\textls[70]{\MakeUppercase{Technical Report}}}
+\fancyhead{}
+\fancyhead[L]{\smash{\traceHeaderLabel}}
+\fancyhead[R]{\smash{\sffamily\footnotesize\color{oppoGreen}\thepage}}
+\fancyfoot{}
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\headrule}{\hbox to\headwidth{\color{black}\leaders\hrule height \headrulewidth\hfill}}
+% Reserve the space required by fancyhdr and compensate in \headsep so that
+% the original text-block position remains unchanged.
+\setlength{\headheight}{21pt}
+\addtolength{\headsep}{-9pt}
+
+% Preserve the spacing values from arxiv_preprint.sty and change typography only.
+\def\section{\@startsection {section}{1}{\z@}{-2.0ex plus
+    -0.5ex minus -.2ex}{1.5ex plus 0.3ex
+minus0.2ex}{\color{oppoInk}\large\sffamily\bfseries\raggedright}}
+\def\subsection{\@startsection{subsection}{2}{\z@}{-1.8ex plus
+-0.5ex minus -.2ex}{0.8ex plus .2ex}{\color{oppoInk}\normalsize\sffamily\bfseries\raggedright}}
+\def\subsubsection{\@startsection{subsubsection}{3}{\z@}{-1.5ex
+plus      -0.5ex minus -.2ex}{0.5ex plus
+.2ex}{\color{oppoInk}\normalsize\sffamily\bfseries\raggedright}}
+
+\def\@maketitle{\vbox{\hsize\textwidth
+\centering
+\thispagestyle{firstpage}
+\vskip -0.22in
+{\LARGE\sffamily\bfseries\color{oppoInk}\@title\par}
+\vskip 0.18in
+\centering
+{\normalsize\bfseries\@author\par}
+\vskip 0.22in minus 0.08in}}
+
+\makeatother
+
+\fancypagestyle{firstpage}{%
+  \fancyhf{}
+  \fancyhead[L]{\smash{\traceHeaderLabel}}
+  \fancyhead[R]{\smash{\sffamily\footnotesize\color{oppoGreen}\thepage}}
+  \renewcommand{\headrulewidth}{0.4pt}
+  \renewcommand{\headrule}{\hbox to\headwidth{\color{black}\leaders\hrule height \headrulewidth\hfill}}}

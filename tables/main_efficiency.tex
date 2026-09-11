@@ -1,0 +1,27 @@
+\begin{table}[t]
+    \centering
+    \caption{Efficiency comparison with \textbf{GUI-Owl-1.5-8B} on OmniGUI at the mild budget.}
+    \label{tab:main-efficiency}
+    \adjustbox{max width=\textwidth,center}{%
+        \footnotesize
+        \setlength{\tabcolsep}{5pt}
+        \renewcommand{\arraystretch}{0.96}
+        \begin{tabular}{l cc c cc c cc}
+            \toprule
+            \textbf{Method} & \textbf{In.Tok} & \textbf{GFLOPs} & \textbf{Sel.\,(ms)} & \textbf{TTFT\,(ms)} & \textbf{E2E\,(ms)} & \textbf{KV\,(MB)} & \textbf{Step~SR} & \textbf{Ret.\,(\%)} \\
+            \midrule
+            \textcolor{gray}{Baseline (full)} & \textcolor{gray}{4892} & \textcolor{gray}{73385} & \textcolor{gray}{0} & \textcolor{gray}{1102.6} & \textcolor{gray}{2958.2} & \textcolor{gray}{697} & \textcolor{gray}{52.45} & \textcolor{gray}{100.0\%} \\
+            DivPrune\pub{(CVPR25)\cite{alvar2025divprune}} & \underline{2011} & \textbf{30170} & 67.0 & 774.1 & 2847.7 & \textbf{292} & 45.76 & 87.2\% \\
+            CDPruner\pub{(NeurIPS25)\cite{zhang2025cdpruner}} & \underline{2011} & \textbf{30170} & 149.2 & 847.6 & 2954.7 & \textbf{292} & 41.45 & 79.0\% \\
+            VisPruner\pub{(ICCV25)\cite{zhang2025vispruner}} & \underline{2011} & \textbf{30170} & 83.0 & 845.6 & 2954.2 & \textbf{292} & 46.11 & 87.9\% \\
+            PruMerge+\pub{(ICCV25)\cite{shang2025prumerge}} & \underline{2011} & \textbf{30170} & 15.8 & 775.7 & 2833.4 & \textbf{292} & 46.50 & 88.7\% \\
+            TRIM\pub{(COLING25)\cite{song2025trim}} & \underline{2011} & \textbf{30170} & \underline{10.0} & \underline{721.1} & 2853.6 & \textbf{292} & 45.84 & 87.4\% \\
+            FastV\pub{(ECCV24)\cite{chen2024fastv}} & 4892 & \underline{38731} & \textbf{0} & 850.7 & \underline{2723.2} & \underline{315} & 46.89 & 89.4\% \\
+            VisionTrim\pub{(ICLR26)\cite{yu2026visiontrim}} & \underline{2011} & \textbf{30170} & 10.7 & 773.5 & 2892.6 & \textbf{292} & 45.72 & 87.2\% \\
+            ZOO-Prune\pub{(CVPR26)\cite{kim2026zooprune}} & \underline{2011} & \textbf{30170} & 69.5 & 972.5 & 3015.7 & \textbf{292} & \underline{48.17} & \underline{91.8\%} \\
+            PruneSID\pub{(ICLR26)\cite{fang2026prunesid}} & \textbf{1939} & \textbf{30170} & 740.0 & 1506.9 & 3542.4 & \textbf{292} & 47.40 & 90.4\% \\
+            \rowcolor{rowblue}\textbf{\method{}} & \underline{2011} & \textbf{30170} & 67.1 & \textbf{453.9} & \textbf{2295.8} & \textbf{292} & \textbf{48.91} & \textbf{93.3\%} \\
+            \bottomrule
+        \end{tabular}
+    }
+\end{table}

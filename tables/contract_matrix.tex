@@ -1,0 +1,27 @@
+\begin{table}[t]
+\centering
+\caption{Existing methods evaluated against rules of lifecycle-aware visual pruning.}
+\label{tab:contract}
+\vspace{2pt}
+\small
+\setlength{\tabcolsep}{5pt}
+\begin{adjustbox}{max width=\linewidth}
+\begin{tabular}{lcccl}
+\toprule
+Method & (i) pre-prefill & (ii) nested & (iii) index-level & Query-dependent tensor (layer) \\
+\midrule
+FastV & \xmark & \xmark & \cmark & LLM self-attention of the live prompt (layer 2) \\
+PruMerge+ & \cmark & \pmark & \xmark & none (synthetic merged embeddings) \\
+TRIM & \cmark & \pmark & \xmark & none$^{\ast}$ (discarded set fused into one token) \\
+VisionTrim & \cmark & \pmark & \xmark & none$^{\ast}$ (synthetic TGVC merge rounds) \\
+VisPruner & \cmark & \pmark & \cmark & none (ViT final-block attention) \\
+PruneSID & \cmark & \pmark & \cmark & none (encoder-side PCA grouping) \\
+DivPrune & \cmark & \cmark & \cmark & none (feature geometry only) \\
+CDPruner & \cmark & \cmark & \cmark & none$^{\ast}$ (instruction-conditioned DPP) \\
+ZOO-Prune & \cmark & \cmark & \cmark & none (projector-input sensitivity) \\
+\midrule
+\method{} (ours) & \cmark & \cmark & \cmark & none$^{\ast}$ (prior + repair anchored) \\
+\bottomrule
+\end{tabular}
+\end{adjustbox}
+\end{table}

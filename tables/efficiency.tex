@@ -1,0 +1,23 @@
+\begin{table}[t]
+    \centering
+    \caption{Per-step latency breakdown with \textbf{GUI-Owl-1.5-8B} on OmniGUI, in milliseconds. This breakdown is measured in a separate strictly serial round on the same serving path.}
+    \label{tab:efficiency}
+    \footnotesize
+    \setlength{\tabcolsep}{4.5pt}
+    \renewcommand{\arraystretch}{1.0}
+    \begin{tabular}{l cc cc cc}
+        \toprule
+        & & & \multicolumn{2}{c}{\textbf{Mild} ($\keepc{=}50/\keeph{=}10\%$)} & \multicolumn{2}{c}{\textbf{Tight} ($\keepc{=}25/\keeph{=}5\%$)} \\
+        \cmidrule(lr){4-5}\cmidrule(lr){6-7}
+        \textbf{Component} & Baseline (full) & \kvr{} & \lmp{}+\nwe{} & \method{} full & \lmp{}+\nwe{} & \method{} full \\
+        \midrule
+        Vision encode + prefill & 649.6 & 263.6 & 324.8 & 329.5 & 305.5 & 305.1 \\
+        Pruning (selector + prior) & 0.0 & 0.0 & 60.7 & 67.4 & 40.5 & 47.0 \\
+        LLM prefill & 452.6 & 328.6 & 141.9 & 140.6 & 102.6 & 101.9 \\
+        \textbf{TTFT} & 1116.8 & 487.4 & 451.7 & \textbf{452.7} & 399.1 & \textbf{397.8} \\
+        Decode (total) & 1794.3 & 1810.4 & 1715.8 & 1711.0 & 1846.0 & 1765.6 \\
+        \textbf{End-to-end} & 3014.7 & 2399.8 & 2304.7 & \textbf{2298.9} & 2374.9 & \textbf{2291.5} \\
+        Visual KV cache & 100\% & 100\% & $-$58.1\% & $-$58.1\% & $-$68.1\% & $-$68.1\% \\
+        \bottomrule
+    \end{tabular}
+\end{table}

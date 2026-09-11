@@ -1,0 +1,1406 @@
+\vspace{1ex}
+\centerline{\LARGE\sc Appendix}
+\vspace{1.5ex}
+\label{app:appendix}
+This appendix presents implementation details, the evaluation protocol, and additional experimental evidence that complements the main paper.
+%
+Section~\ref{app:method-details} specifies the lifecycle contract, the method implementation, the comparison protocol, and the configuration choices.
+%
+Section~\ref{app:evidence} presents additional experiments, covering lifecycle behavior, benchmark breakdowns, ablations, and serving efficiency.
+%
+Section~\ref{app:transfer} examines transfer to other backbones and states the scope and limitations of the evidence.
+%
+Together, these analyses provide a comprehensive understanding of our proposed \method{}.
+\renewcommand{\topfraction}{0.85}
+\renewcommand{\bottomfraction}{0.75}
+\renewcommand{\textfraction}{0.12}
+\renewcommand{\floatpagefraction}{0.5}
+\setcounter{topnumber}{2}
+\setcounter{bottomnumber}{2}
+\setcounter{totalnumber}{4}
+\setlength{\textfloatsep}{8pt plus 2pt minus 3pt}
+\setlength{\intextsep}{6pt plus 2pt minus 2pt}
+\setlength{\floatsep}{8pt plus 2pt minus 2pt}
+\raggedbottom
+\makeatletter
+\let\trace@origtable\table
+\def\table{\@ifnextchar[\trace@tableopt{\trace@origtable[ht]}}
+\def\trace@tableopt[#1]{\trace@origtable[ht]}
+\makeatother
+\section{Method, Protocol, and Configuration}
+\label{app:method-details}
+\subsection{Lifecycle Contract and Method Space}
+Tab.~\ref{tab:contract} compares the nine existing methods of \S\ref{sec:exp} against the three constraints of Eq.~\ref{eq:lifecycle}.
+%
+We score each method from its official selection rule.
+%
+Since the constraints describe our deletion-only serving path, a mark records compatibility with this path rather than a universal judgment on the method.
+%
+Under condition (ii), \cmark{} denotes a rank or greedy-prefix rule that nests by construction, \pmark{} denotes a quota, merge, or de-duplication rule that nests only after a specified modification, and \xmark{} denotes per-step re-scoring, which cannot nest.
+%
+Condition (i) requires that the keep be decided from information available before the first LLM prefill.
+%
+The last column lists the tensor that the official rule must observe to produce that keep.
+%
+When this tensor is the LLM self-attention of the live prompt, as in FastV, it is available only during prefill, so condition (i) fails.
+%
+A superscript asterisk marks methods that consult the episode instruction, which precedes prefill and is therefore admitted by condition (i).
+%
+For detailed compliance, FastV fails conditions (i) and (ii), because its score is the LLM self-attention of the live prompt.
+%
+Merge-family methods (PruMerge+, TRIM, and VisionTrim) fail condition (iii), because synthetic tokens cannot later be dropped as cache rows on this path.
+%
+VisPruner and PruneSID receive \pmark{} under condition (ii), because quota or de-duplication nests only after a specified modification.
+%
+In contrast, DivPrune, CDPruner, ZOO-Prune, and \method{} satisfy all three conditions under their official rules, which enables a fair comparison on the same lifecycle.
+\input{tables/contract_matrix}
+
+\noindent\textbf{Feature Matrix of Prior Families.}
+\label{app:feature-matrix}
+Tab.~\ref{tab:feature-matrix} compares representative prior families along the six axes of our setting.
+%
+The columns record six properties. They cover multi-step reuse of visual state, GUI-screen design, decisions made before language-model processing, native token rows at their original positions, a nested order that serves two budgets, and no re-encoding of historical frames.
+%
+TopV's no-re-encoding mark ($^{a}$) holds within a single generation rather than across frames.
+%
+The multi-step mark of VisionZip and PruMerge ($^{b}$) denotes text-agnostic compression for multi-turn use.
+%
+SparseVILA's pre-admission mark ($^{c}$) is conservative prefill pruning followed by decode-time retrieval.
+%
+Matryoshka's nested-budget mark ($^{d}$) encodes nested granularity in the representation rather than ordering native rows at admission.
+%
+Existing visual-token pruners cover pre-admission or native rows, but not GUI multi-step reuse.
+%
+In contrast, GUI input-side methods cover multi-step screens and a decision before the language model, yet they do not keep native rows or a nested order.
+%
+GUI cache-side methods keep native rows without re-encoding, but they re-score at every step, so they miss pre-admission and nested budgets.
+%
+Different from the prior families, \method{} covers all six axes with our proposed lifecycle contract, providing a unified framework for GUI agents.
+\input{tables/feature_matrix}
+
+\subsection{Method Specification}
+This subsection formalizes the complete decision path during inference, from detector-derived interaction priors and evidence ordering to native-token repair and monotone cache contraction.
+%
+We present these components in pipeline order for easy understanding.
+%
+The details are as follows.
+\\
+\noindent\textbf{Layout-derived Interaction Prior.}
+A generic detector that was not trained on GUI screens readily misses dense operable widgets.
+%
+Thus, we use the \texttt{icon\_detect} branch of OmniParser-v2~\citep{lu2024omniparser} which is fine-tuned on interactable web and desktop elements.
+%
+We load this branch alone to get axis-aligned boxes.
+%
+Specifically, we detect widgets at a confidence of $0.05$ with non-maximum suppression at an intersection-over-union of $0.1$.
+%
+Besides, we resize the longer image edge to $768$ pixels before snapping to the network stride.
+%
+The detector reads screenshot pixels rather than encoder features, so it can run at admission.
+%
+After admission, retirement operates solely on the shrinking order, so historical frames require neither bounding boxes nor rerunning the detector.
+\\
+\noindent\cnum{1}~\textit{Energy Definitions.}
+For each detection $b$, we compute entropy~$H_b$, contrast~$C_b$, containment~$G_b$ and resonance~$R_b$.
+%
+Then we generate the interaction energy with the following equation:
+\[
+E_b=H_b+C_b+G_b+R_b.
+\]
+All four attributes lie in $[0,1]$ under our definition.
+%
+Specifically, $H_b$ is the base-2 entropy of a 256-bin Sobel-magnitude histogram on a $32\times32$ grayscale crop, divided by eight and clipped to the unit interval.
+%
+$C_b$ is the ascending rank of the euclidean difference between the mean CIELAB values on the three-pixel inner and outer boundary rings.
+%
+$G_b=1/(1+n_b)$, where $n_b$ counts strictly smaller boxes contained by $b$.
+%
+$R_b$ is the min to max normalized resonance score. It is the larger of the row and column peer counts within half the median box height or width.
+%
+Each attribute is computed from the box alone, so the prior is query-independent and concentrates on operable regions.
+\\
+\noindent\cnum{2}~\textit{Energy Attributes.}
+Tab.~\ref{tab:lip-energy} shows that removing any single attribute from $E_b$ lowers accuracy on both grounding benchmarks.
+%
+Containment $G_b$ is the costliest removal ($-2.91\%$ and $-1.45\%$), and resonance $R_b$ follows it on ScreenSpot-v2 ($-2.28\%$).
+%
+Contrast and entropy contribute less but are still significant.
+%
+These results fully demonstrate that the prior captures operable regions.
+\input{tables/lip_energy}
+\\
+\noindent\textbf{Nested Evidence Ordering.}
+With the interaction prior defined, Nested Evidence Ordering (NEO) determines how visual evidence is admitted and how the resulting order can be reused under different budgets.
+It combines within-frame instruction relevance with prior-weighted novelty and residual coverage to produce a single nested sequence of native visual tokens.
+In this subsection, we clarify three points before presenting the final ordering.
+%
+They concern degenerate cosine scores, the role of $m_j$ in the residual, and the exact scoring and pooling form.
+These points correspond to the following three implementation details and lead directly to the admission procedure summarized in Alg.~\ref{alg:nested}.
+\\
+\noindent\cnum{1}~\textit{Degenerate Relevance.}
+The z-score in Eq.~\ref{eq:likelihood} is taken over the $N$ visual tokens of the current frame, so $a_j$ is a within-frame ranking rather than an absolute cosine.
+%
+If that variance is zero, $a_j$ falls back to the uniform distribution.
+%
+Then $\log a_j$ becomes a constant in Eq.~\ref{eq:qd}.
+%
+Under this degenerate case, the order reduces to prior-weighted residual selection rather than failing, ensuring robust token pruning.
+\\
+\noindent\cnum{2}~\textit{Equivalent Residual.}
+The mass $m_j$ enters Eq.~\ref{eq:qd} through $\boldsymbol\psi_j=\sqrt{m_j}\,\mathbf z_j$.
+%
+Because $m_j=1+\alpha Np_j\geq 1$, the selected features $\{\boldsymbol\psi_i\}_{i\in S}$ and $\{\mathbf z_i\}_{i\in S}$ span the same subspace.
+%
+The projector $\Pi_S$ is therefore the euclidean projector onto $\mathrm{span}(\mathbf z_S)$.
+%
+We compute the residual $d_j^2(S)$ as follows.
+\begin{equation}
+d_j^2(S)
+=
+m_j
+\left\lVert
+\mathbf z_j-\Pi_{\mathrm{span}(\mathbf z_S)}\mathbf z_j
+\right\rVert_2^2 .
+\label{eq:mass-residual}
+\end{equation}
+Thus, $m_j$ scales only the candidate's novelty, and it does not reweight a direction already in $S$.
+\\
+\noindent\textbf{\textit{Ordering Form.}}
+Eq.~\ref{eq:likelihood} and Eq.~\ref{eq:qd} determine several design choices that might otherwise appear arbitrary.
+%
+To be specific, the coefficient on $\log a_j$ is fixed to one.
+%
+The query rows are combined by max-pooling.
+%
+The query matrix $\mathbf U$ includes the instruction-token rows.
+%
+Tab.~\ref{tab:neo-form} reports the ablation results at $\keepr{=}10\%$.
+%
+Doubling the coefficient of $\log a_j$ is the costliest substitution on ScreenSpot-v2 ($-10.53\%$).
+%
+In contrast, replacing max-pooling with log-mean-exp is the costliest on ScreenSpot-Pro ($-6.45\%$).
+%
+Collapsing $\mathbf U$ to its mean row costs $8.81\%$ and $5.63\%$ on the two suites.
+%
+These results show that the adopted scoring form is not interchangeable.
+%
+Alg.~\ref{alg:nested} then commits the resulting prefixes before prefill.
+%
+The next stage repairs spatial coverage while preserving the nested sets.
+\input{tables/neo_form}
+
+\begin{algorithm}[tpb]
+\caption{Admission-time Nested Selection for One Frame}
+\label{alg:nested}
+\begin{algorithmic}[1]
+\STATE \textbf{Input:} tokens $\mathbf{E}\in\mathbb{R}^{N\times D}$, instruction matrix $\mathbf U$, detections, budgets $k_h\leq k_c$, doses $\rhocur$ and $\rhohist$
+\STATE \textbf{Output:} admitted sets $S_t^{\mathrm{hist}}\subseteq S_t^{\mathrm{cur}}$
+\STATE Rasterize detections into $\mathbf{p}$, compute $\alpha_t^\star$, and set $m_j\leftarrow 1+\alpha_t^\star Np_j$ \hfill (Eq.~\ref{eq:alpha-star})
+\STATE Normalize features to $\mathbf{z}_j$, compute $a_j$, and set $\boldsymbol\psi_j\leftarrow\sqrt{m_j}\mathbf{z}_j$ \hfill (Eq.~\ref{eq:likelihood})
+\STATE Apply greedy matching pursuit to obtain a length-$k_c$ sequence $\pi$ \hfill (Eq.~\ref{eq:qd})
+\STATE Set $g_c\leftarrow\lceil\rhocur k_c\rceil$ and replace the $g_c$-tail of $\pi$ with stride representatives
+\STATE Set $g_h\leftarrow\lceil\rhohist k_h\rceil$ and protect $\pi[1{:}k_h-g_h]$
+\STATE Partition the remaining full-frame complement and select medoids $\{\mu_b\}_{b=1}^{g_h}$ \hfill (Eq.~\ref{eq:medoid})
+\STATE Remove medoids from $\pi[k_h-g_h{:}]$ and insert them after the protected prefix
+\STATE Evict the lowest-ranked eligible tail tokens needed to keep length $k_c$
+\STATE \textbf{return} $S_t^{\mathrm{cur}}=\mathrm{set}(\pi[1{:}k_c])$ and $S_t^{\mathrm{hist}}=\mathrm{set}(\pi[1{:}k_h])$
+\end{algorithmic}
+\end{algorithm}
+
+\noindent\textbf{Native-token Coverage Repair.}
+Condition (iii) of Eq.~\ref{eq:lifecycle} keeps every repaired token as an original cache row.
+%
+Condition (ii) keeps the history set nested in the current set.
+%
+The current-frame stride on $U_c$ is specified in \S\ref{sec:method-c}.
+%
+We next turn to the history pass, explaining the detailed partition process.
+%
+\noindent\cnum{1}~\textit{History Representative.}
+When a frame is retired, we keep only $k_h$ native rows instead of $k_c$, where $k_h<k_c$.
+%
+Each retained token should therefore represent a local region that may be relevant to future queries.
+%
+A centroid of that neighborhood would be synthetic and would violate condition (iii).
+%
+Thus, we choose the native token that minimizes within-region squared feature distance as the medoid.
+%
+Specifically, \awc{}-H protects a prefix of length $k_h-g_h$ and partitions the raster-ordered complement into $g_h$ contiguous regions.
+%
+From each region $R_b$ it keeps the medoid as defined below.
+\begin{equation}
+    \mu_b
+    =
+    \arg\min_{j\in R_b}
+    \sum_{l\in R_b}
+    \bigl\lVert\mathbf h_j-\mathbf h_l\bigr\rVert_2^2
+    \label{eq:medoid}
+\end{equation}
+where $\mathbf h_j$ is a renormalized stride slice of at most $256$ channels of $\mathbf z_j$.
+%
+Inserting these medoids after the protected prefix yields the nested history subset with the following equation:
+\begin{equation}
+    S_t^{\mathrm{hist}}
+    =
+    \{\pi_1,\ldots,\pi_{k_h-g_h}\}
+    \cup
+    \{\mu_1,\ldots,\mu_{g_h}\}
+    \subseteq S_t^{\mathrm{cur}},
+    \label{eq:admit}
+\end{equation}
+so every element of $S_t^{\mathrm{hist}}$ already corresponds to an existing row in $S_t^{\mathrm{cur}}$.
+The subset relation makes retirement a deletion-only operation that removes $S_t^{\mathrm{cur}}\setminus S_t^{\mathrm{hist}}$.
+This preserves the exact encoder features and avoids synthetic features or new KV rows that need to be reconstructed from scratch.
+\\
+\noindent\cnum{2}~\textit{History Partition.}
+The regions are not an arbitrary split of the complement.
+%
+Restricting region sizes to $\{\lfloor L/g_h\rfloor,\lceil L/g_h\rceil\}$ over an $L$-token complement turns boundary placement into choosing which $r=L\bmod g_h$ regions receive the extra token.
+%
+A dynamic program places those boundaries to minimize the maximum within-region sum of squared distances to the region mean.
+%
+It has $\mathcal{O}(g_h r)$ states and transitions, each evaluated in $\mathcal{O}(1)$ from prefix sums of $\mathbf{h}_j$ and $\lVert\mathbf{h}_j\rVert^2$.
+%
+Preparing the sums and extracting medoids costs $\mathcal{O}(L\tilde{d})$ with $\tilde{d}\leq 256$.
+%
+Alg.~\ref{alg:medoid} specifies this partition in detail.
+\\
+\noindent\cnum{3}~\textit{Repair Rules.}
+The current-frame repair could use the same medoid rule, and the history repair could use stride instead.
+%
+Tab.~\ref{tab:ablation-ncr} in the main text compares the representative rules at each pass.
+%
+On the current frame, stride reaches $67.92\%$ on ScreenSpot-v2 and $37.63\%$ on ScreenSpot-Pro, while medoids reach $58.65\%$ and $30.11\%$.
+%
+In contrast, the preference reverses on the history frame.
+%
+Medoids reach $24.04\%$ on OmniGUI against $23.20\%$ for stride, and Mind2Web differs by $0.02\%$.
+%
+The current budget is large enough that the binding risk is a residual spatial gap, and equally spaced stride positions close such gaps at the lowest cost per token.
+%
+The history budget is far tighter, so each surviving representative must summarize an entire region.
+%
+In that case, the native token closest to its region in feature space is a better single prototype than a position fixed by geometry alone.
+%
+Thus, the larger current budget is better spent on spatial stride, whereas the tighter history budget is better spent on native region prototypes.
+%
+These results show that the two repairs should use different representative rules.
+%
+Alg.~\ref{alg:nested} then commits both repaired prefixes for effective spatial coverage.
+\begin{algorithm}[tpb]
+\caption{History Medoid Partition (\awc{}-H)}
+\label{alg:medoid}
+\begin{algorithmic}[1]
+\STATE \textbf{Input:} normalized frame features $\{\mathbf z_j\}_{j=1}^{N}$, protected prefix $P_h=\pi[1{:}k_h-g_h]$, region count $g_h$
+\STATE \textbf{Output:} real-token medoids $\{\mu_b\}_{b=1}^{g_h}$
+\STATE Form the raster-ordered complement $L=[N]\setminus P_h$
+\STATE For each $j\in L$, take a deterministic stride slice of at most $256$ channels of $\mathbf z_j$ and renormalize it to $\mathbf h_j$
+\STATE Precompute prefix sums of $\mathbf h_j$ and $\lVert\mathbf h_j\rVert^2$ along $L$
+\STATE The dynamic program uses contiguous boundaries with region sizes in $\{\lfloor|L|/g_h\rfloor,\lceil|L|/g_h\rceil\}$. It minimizes the maximum within-region sum of squared distances to the region mean
+\STATE \textbf{return} the medoid $\mu_b$ of each region $B_b$ under Eq.~\ref{eq:medoid}
+\end{algorithmic}
+\end{algorithm}
+\\
+\noindent\textbf{Monotone KV Contraction.}
+\S\ref{sec:method-kv} already specifies how a retiring frame is cropped to the first $k_h$ positions of $\pi$ and how those native rows are replayed with the incoming step.
+%
+We next explain how contraction preserves the original positions of native tokens and reduces the serving cost.
+\\
+\noindent\cnum{1}~\textit{Cache Contraction.}
+Each frame occupies one contiguous visual span in the cache, and the admitted order fixes $S_t^{\mathrm{hist}}$ as row indices within that span.
+%
+Specifically, text and action rows are untouched.
+%
+Positional indices are never re-derived from the compacted sequence.
+%
+Before the first LLM prefill, \kvr{} assigns multimodal RoPE indices on the unpruned sequence and records the original-position of every admitted row.
+%
+Since contraction only removes rows, the remaining rows keep their original positions.
+%
+Besides, rotary offsets for subsequent text are recomputed from the surviving position.
+\\
+\noindent\cnum{2}~\textit{Serving Cost.}
+The serving cost has three parts, namely visual encoding, LLM prefill, and persistent visual-cache storage.
+%
+After initialization, each transition encodes one new screenshot and retires the previous current frame.
+%
+Retirement only removes rows from the stored order of that frame.
+%
+The merged LLM forward therefore receives the non-visual prefix, followed by the $k_h$ retained historical tokens and the $k_c$ tokens admitted from the current screenshot.
+%
+The resulting lengths are as follows:
+\begin{equation}
+L_t^{\mathrm{enc}}=k_c,\qquad
+L_t^{\mathrm{KV}}=T_t+k_h+k_c,\qquad
+|\mathrm{KV}_{\mathrm{visual}}|=\mathcal{O}(k_c+Hk_h).
+\label{eq:accounting}
+\end{equation}
+Here, $T_t$ is the prefix length at step $t$, and $H$ is the number of retained historical frames.
+%
+The first equality counts the visual tokens supplied by the new screenshot.
+%
+The second equality counts the tokens processed by the merged LLM forward.
+%
+The last equality counts only visual KV rows and excludes the non-visual history.
+%
+The replayed $k_h$ rows reuse features encoded when their frame first arrived.
+%
+They add only the retained $k_h$ visual tokens to the LLM prefill.
+%
+Because prefill processes these tokens in parallel rather than autoregressively, their additional latency is small, while reusing the original encoded features preserves feature fidelity.
+%
+This replaces the repeated $\mathcal{O}(HN)$ visual encoding of dense historical frames.
+%
+Each retained historical frame occupies $k_h$ visual rows instead of $N$, while the visual cache grows as $\mathcal{O}(k_c+Hk_h)$.
+%
+Under our multi-step evaluation protocol on OmniGUI, one contraction costs $6.4$\ ms per transition, compared with $90.8$\ ms for encoding one screenshot.
+%
+Thus, restoring a retired frame is much cheaper than encoding it again.
+%
+Meanwhile, the replayed set is the history prefix returned by Alg.~\ref{alg:nested}, which satisfies condition (ii) of Eq.~\ref{eq:lifecycle}.
+%
+However, the above feature reuse guarantees nesting but not downstream context consistency after contraction.
+\\
+\noindent\cnum{3}~\textit{Context-consistent replay.}
+The central issue is the interaction between visual-token deletion and the downstream text and action states already stored in the cache.
+%
+In a deletion-only update, these downstream rows may have been computed while the retiring frame still contained visual rows that will later be removed.
+%
+Keeping those rows after deletion creates a mixed context.
+%
+New queries then attend to visual rows from the shortened context while also attending to text or action rows computed from the original context.
+%
+Such stale cross-modal states can make the evidence inconsistent and may contribute to confusion or hallucination in later steps.
+%
+Our contraction removes this mismatch by truncating the cache at the retiring frame boundary before appending the next step.
+%
+It keeps only the selected $k_h$ visual rows, so the merged forward adds only a small number of visual tokens.
+%
+These rows are processed in parallel with the downstream text and action rows during prefill.
+%
+The extra computation and latency therefore remain small, while the downstream states are aligned with the contracted context.
+%
+Every downstream state is therefore computed against the same visual context that will remain available during subsequent decoding.
+%
+At the same time, the retained visual features are reused exactly, and no synthetic visual representation is introduced.
+%
+The resulting design provides \emph{context-consistent replay} and \emph{exact feature reuse}.
+%
+It does not claim exact equivalence to a dense recomputation after visual rows are removed, because the dense computation includes those removed rows in the context.
+%
+At the $100\%$ budget, no visual rows are removed.
+%
+With this condition, the byte-exact no-op test in Appendix~\ref{app:protocol} verifies equivalence with the dense computation.
+%
+At pruned budgets, we evaluate the lifecycle and report its accuracy consequences in Appendix~\ref{app:evidence}.
+
+\subsection{Evaluation Protocol and Baseline Reproduction}
+\label{app:protocol}
+\S\ref{sec:exp-setup} already names the backbones, the six evaluated benchmarks, and the matched visual-token budgets.
+%
+This subsection specifies the scoring rules and method adaptations that are reproducible.
+\\
+\noindent\textbf{Baseline Setting.}
+We evaluate nine leading training-free methods against random and uniform pruning.
+%
+These methods span diversity, relevance, saliency, merging, posterior attention, sensitivity, and semantic grouping.
+%
+Every method follows its official selection settings and target budget.
+\\
+\noindent\textbf{Scoring Protocol.}
+\S\ref{sec:exp-setup} counts a step as correct only when both the action type and its target or argument are correct.
+%
+We adopt the reference protocol's click threshold for every reported result.
+%
+For click and long-press actions, the predicted point must lie within a normalized euclidean distance of $0.04$ from the gold coordinate after both points are normalized by the screen dimensions.
+%
+Text and scroll arguments follow the reference protocol's string and direction rules.
+\\
+\noindent\textbf{Implementation Fidelity.}
+Each existing method is re-implemented from its official repository.
+%
+VisPruner, PruMerge+, and the global term of VisionTrim use true final-block ViT attention.
+%
+FastV is implemented inline in the LLM according to its official protocol.
+%
+Merge methods use the declared real-token representative rule, and every method is held to an exact keep budget.
+%
+Five checks establish mechanical correctness.
+%
+\noindent\textit{(1) No-op test.}
+A byte-exact no-op test verifies that every pruning run at a $100\%$ budget reproduces the unpruned responses across probe documents.
+%
+\noindent\textit{(2) Unit tests.}
+Unit tests cover selector invariants, index and RoPE consistency, and per-method oracle validation against the official selection blocks.
+%
+\noindent\textit{(3) Exact-budget check.}
+An exact-budget check verifies $|kept-\lceil rN\rceil|\leq1$ on every probe document.
+%
+\noindent\textit{(4) Position consistency check.}
+A position consistency check confirms that all methods preserve the same original-position convention.
+%
+\noindent\textit{(5) Multi-step ledger check.}
+A multi-step ledger check reconstructs each realized $(\keepc,\keeph)$ from its per-step kept-token ledger and compares it with the nominal budget.
+%
+Every experiment in the main table passes the above checks.
+\\
+\noindent\textbf{Excluded Methods.}
+PyramidDrop~\citep{xing2025pdrop} was evaluated but excluded from the comparison tables.
+%
+Its pyramid schedule leaves shallow layers unpruned, so its effective pruning is approximately zero at our nominal budgets.
+%
+The latency of PyramidDrop is nearly identical to the unpruned model.
+%
+This is not a comparable setting.
+%
+IVC-Prune~\citep{sun2026ivcprune} is excluded for the same reason.
+%
+It prunes at layer $22$ of the LLM, so the vision encoder, all shallow layers, and most prefill FLOPs and KV rows still operate at dense length.
+%
+Because these nominal ratios are not comparable with other methods' budgets, we exclude both methods for fair comparisons.
+\\
+\noindent\textbf{Baseline Sensitivity.}
+Official hyperparameters of the compared methods may not be optimal for GUI screens.
+%
+Thus, we separately test one hyperparameter for four representative baselines on ScreenSpot-v2 at $\keepr\!=\!10\%$.
+%
+Specifically, VisPruner improves from $46.07\%$ to $58.81\%$ as its importance ratio increases over $\{0.25,0.50 (\text{ Official }),0.75,0.90\}$.
+%
+The official equal importance and diversity split is therefore not optimal on this GUI suite.
+%
+This supports the main-text observation that generic diversity is weaker than attention importance on these screens.
+%
+VisionTrim also improves as its DVTS share increases from $0.5$ to the official $0.7$ and then to $0.9$, reaching $44.26\% \to 58.65\% \to 61.24\%$.
+%
+PruneSID gives $61.01\% \to 58.96\% \to 58.49\%$ as its NMS threshold scale changes over $\{0.7,1.0 ( \text{ Official }),1.3\}$.
+%
+ZOO-Prune remains within a narrow range of $57.47\% \to 56.29\% \to 55.90\%$ as its direction count changes over $\{16,64 (\text{ Official }),256\}$.
+%
+The lowest direction count gives the best score among these settings, while larger counts mildly reduce accuracy.
+%
+Among the tuned baselines, VisionTrim at a DVTS share of $0.9$ is strongest, reaching $61.24\%$.
+%
+Despite this improvement, VisPruner remains $12.66$\% below \method{} at $73.90\%$.
+%
+These results further demonstrate the robustness of our proposed \method{} under diverse comparisons.
+\subsection{Configuration Validation}
+\label{app:hyper}
+This section first defines the configuration variables and then evaluates their effect across tasks and budgets.
+%
+We begin with the prior rule and selected scalar grids.
+%
+The following subsections test whether these choices remain useful when the task or budget changes.
+%
+\noindent\textit{Prior strength and support calibration.}
+\label{app:alpha}
+For each benchmark and budget, we select the prior cap $\bar{\alpha}$ from the public grid $\{1,2,4,6\}$.
+%
+An adopted run either uses this cap or applies the effective-support rule in Eq.~\ref{eq:alpha-star}.
+%
+Tab.~\ref{tab:alpha-sens} reports the results across this grid.
+%
+The setting with $\alpha=0$ appears in the row without the prior in Tab.~\ref{tab:ablation-neo}.
+%
+For a normalized prior $\mathbf p$ over the $N$ frame tokens, define
+$m_j(\alpha)=1+\alpha Np_j$ and
+$N_{\mathrm{eff}}(\alpha)=\bigl(\sum_j m_j(\alpha)\bigr)^2\!/\sum_j m_j^2(\alpha)$.
+%
+The quantity $N_{\mathrm{eff}}$ acts as an effective token count.
+%
+If $r$ tokens have equal mass $c$ and all other tokens have zero mass, then
+%
+the numerator is $(rc)^2$ and the denominator is $rc^2$.
+%
+The ratio is therefore $r$.
+%
+The squared sum in the numerator makes the quantity independent of the overall mass scale.
+%
+The squared masses in the denominator increase when the mass concentrates on a few tokens.
+%
+Uniform mass over $N$ tokens gives $N_{\mathrm{eff}}=N$.
+%
+Concentration on one token gives $N_{\mathrm{eff}}\approx1$.
+%
+The unit term in $m_j(\alpha)$ keeps every token eligible.
+%
+The term $\alpha Np_j$ increases the mass of tokens in regions indicated by the interaction prior.
+%
+This bias favors operable regions.
+%
+An excessive value of $\alpha$ can concentrate the order too narrowly and remove context that later actions may require.
+%
+For a given cap, $\alpha_t^\star$ is the largest strength defined as follows:
+\begin{equation}
+\alpha_t^\star
+=
+\max\left\{
+0\leq\alpha\leq\bar{\alpha}
+\ \middle|\
+\frac{\left(\sum_j m_j(\alpha)\right)^2}{\sum_j m_j^2(\alpha)}
+\geq \zeta k
+\right\},
+\qquad \zeta=1 .
+\label{eq:alpha-star}
+\end{equation}
+
+The applied strength is $\min(\bar{\alpha},\alpha^{\star})$.
+%
+Frames without detector support use no prior.
+%
+\noindent\textit{Selected scalars.}
+With the prior rule fixed, each result of \method{} in the main tables uses one configuration for its dataset and budget.
+%
+The declared grid selects the prior cap, the calibration mode, and the current dose.
+%
+Multi-step runs also select one history dose.
+%
+The current frame pass uses $\rhocur$ for both single-step and multi-step tasks.
+%
+The history pass uses the independent dose $\rhohist$ only when $k_h<k_c$.
+%
+The doses are selected from fixed public grids $\rhohist\in\{0.05,0.10,0.20\}$ and $\rhocur\in\{0,0.2,0.3,0.5\}$.
+
+\subsubsection{Fixed-Configuration Check}
+\label{app:calibration}
+We first evaluate whether each benchmark and budget needs its own configuration.
+%
+Specifically, we evaluate one global configuration with $\alpha=2$ and the default applicable dose at $16$ benchmark-budget combinations across all six benchmarks.
+%
+The six single-step results at the mild budget in Tab.~\ref{tab:global-fixed} use the corresponding $\alpha\!=\!2$ sensitivity estimates.
+%
+The gap between the two configurations stays within $1.9\%$.
+%
+The selected configuration improves the median result by $+1.0\%$ and improves 14 of the 16 combinations by less than $+2\%$.
+%
+The fixed configuration is ahead by $0.3\%$ on MMBench at $\keepr=5\%$.
+%
+The small aggregate gap shows that one fixed setting is often sufficient, while the larger differences identify where benchmark-specific selection matters.
+%
+The Mind2Web Cross-Website split gains $3.0\%$ at $\keepc=25\%$, where the strongest prior is most useful.
+%
+AndroidControl gains $4.1\%$ at the tight budget, where the heavier current dose supplies the main improvement.
+%
+The fixed setting omits the heavy current dose required by this sparse-UI domain.
+%
+Its $\alpha$ response is flat in Tab.~\ref{tab:alpha-sens}.
+%
+The result is therefore dose-specific.
+%
+Besides this dose-specific result, we rely on Tab.~\ref{tab:global-fixed} for the broader comparison with existing methods.
+%
+Against the strongest existing methods, the fixed setting remains close on five of the six benchmarks.
+%
+Separate selection improves the result on most benchmarks, while AndroidControl remains sensitive to the current dose.
+%
+The comparison therefore supports per-benchmark configuration without implying that one prior strength is best for every task.
+\input{tables/global_fixed}
+\subsubsection{Benchmark and Budget Dependence}
+\noindent\cnum{1}~\textit{Task-level pattern.}
+We investigate the task-level pattern of the preferred prior strength.
+%
+To be specific, candidate-based selection chooses from a finite set of candidate elements or answers.
+%  
+Coordinate grounding predicts a location on the screenshot, while structured action prediction emits an action and its required arguments.
+%
+In this comparison, Mind2Web Task uses candidate-based selection. 
+%
+MMBench-GUI L2, ScreenSpot-v2, and ScreenSpot-Pro form the coordinate-grounding family. 
+%
+OmniGUI and AndroidControl form the structured-action family.
+%
+The preferred prior cap follows the task type and then varies with the budget.
+%
+Candidate-based selection favors strong caps in $\{4,6\}$, while coordinate grounding and structured action prediction favor milder caps because location and action prediction need surrounding context.
+%
+Further analyses are presented below.
+\input{tables/alpha_sens}
+\input{tables/alpha_dose_2d}
+\\
+\noindent\cnum{2}~\textit{Configured-strength analysis.}
+Tab.~\ref{tab:alpha-sens} shows that the useful cap depends on both the task and the budget.
+%
+On candidate-based selection, a stronger prior cap improves accuracy.
+%
+For example, Mind2Web Cross-Task Step~SR rises from $43.68\%$ to $46.86\%$ across the public grid, so the strongest cap is selected there.
+%
+MMBench-GUI instead peaks at an intermediate cap at $\keepr=50\%$ and declines at the strongest setting, showing that stronger concentration is not uniformly better even within candidate-based selection.
+%
+Within coordinate grounding, ScreenSpot-v2 favors mild caps and gains up to $+2.7\%$ at the tightest budget.
+%
+Meanwhile, ScreenSpot-Pro tolerates a stronger cap only when enough budget remains for context.
+%
+Within structured action prediction, OmniGUI changes little across caps.
+%
+Meanwhile, AndroidControl stays within $\pm0.4\%$ under the official protocol.
+%
+The selected configurations therefore follow task structure rather than a single global prior strength.
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=0.99\linewidth]{figures/figA1_alpha_ladder.pdf}
+    \caption{Prior strength analysis with \textbf{GUI-Owl-1.5-8B}. The filled marker is the adopted $\bar{\alpha}$.}
+    \label{fig:alpha-grid}
+    \end{figure}
+    \begin{figure}[t]
+    \centering
+    \includegraphics[width=0.50\linewidth]{figures/figA4_prior_value.pdf}\hfill
+    \includegraphics[width=0.48\linewidth]{figures/figA5_damage.pdf}
+    \caption{Prior value and damage localization with \textbf{GUI-Owl-1.5-8B}. The left panel shows the gain over uniform. The right panel shows Mind2Web Op.F1 versus Element-Accuracy.}
+    \label{fig:spectrum-damage}
+    \end{figure}
+    \begin{figure}[t]
+        \centering
+        \includegraphics[width=0.48\linewidth, trim=0 115 0 0, clip]{figures/fig6_sens.pdf}\hfill
+        \includegraphics[width=0.48\linewidth, trim=0 0 0 115, clip]{figures/fig6_sens.pdf}
+        \caption{Sensitivity analysis with \textbf{GUI-Owl-1.5-8B}. (a)~Prior strength. (b)~Current dose.}
+        \label{fig:hyperparams}
+        \end{figure}
+\subsubsection{Prior and Coverage Interaction}
+The prior choice remains stable when the coverage dose changes.
+%
+Tab.~\ref{tab:alpha-dose-2d} shows that strong caps are usually preferred, but their interaction with coverage depends on the budget.
+%
+At tight budgets, the prior can already cover the interactive surface and extra repair competes for the same tokens.
+%
+At milder budgets, the selected configuration combines a strong cap with a larger current dose because additional tokens remain available for coverage repair.
+%
+The prior identifies likely interactive regions, while repair protects regions that the concentrated order leaves exposed.
+%
+Details are as follows.
+\\
+\noindent\cnum{1}~\textit{Prior value and damage.}
+Figs.~\ref{fig:alpha-grid} and~\ref{fig:spectrum-damage} show that the prior improves spatial grounding, but its benefit depends on the task and the available context.
+%
+The effective-support rule limits the applied strength when concentration would remove too much context.
+%
+The interaction prior contributes little over uniform on AndroidControl but produces a much larger gain on ScreenSpot-Pro.
+%
+On Mind2Web, the remaining variation appears mainly in element grounding.
+%
+Thus, the prior mainly helps the model locate the target. 
+%
+When later actions need more context, a milder prior is preferred.
+\\
+\noindent\cnum{2}~\textit{Sensitivity curves.}
+Fig.~\ref{fig:hyperparams} summarizes the two parameters over their tested ranges.
+%
+The curves show that the current dose repairs coverage gaps left by greedy selection, but excessive repair approaches uniform sampling.
+%
+The prior and dose therefore address different failure modes.
+%
+The prior changes where evidence is concentrated, while the dose restores regions that concentration would otherwise discard.
+%
+These complementary effects demonstrate the robustness of our \method{}.
+\\
+\noindent\cnum{3}~\textit{Calibration diagnostics.}
+In the $1{,}000$-frame OmniGUI dump, Eq.~\ref{eq:alpha-star} is active mainly at the mild budget and reaches the configured cap on $18.4\%$ of frames, compared with $70.3\%$ at the tight budget.
+%
+AndroidControl shows the same shift, with cap saturation increasing from $11.7\%$ to $70.6\%$.
+%
+The support rule therefore permits stronger priors only when the retained context remains sufficient.
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=0.90\linewidth]{figures/fig7_dose.pdf}
+    \caption{Dose response analysis on ScreenSpot-v2 with \textbf{GUI-Owl-1.5-8B}.}
+    \label{fig:dose}
+    \end{figure}
+    \begin{figure}[t]
+        \centering
+        \includegraphics[width=1\linewidth]{figures/figA9_robustness.pdf}
+        \caption{Robustness analysis of selector components with \textbf{GUI-Owl-1.5-8B} on ScreenSpot-v2 at $\keepr=10\%$. (a)~Detector degradation. (b)~Instruction-likelihood temperature.}
+        \label{fig:robustness}
+        \end{figure}
+\subsubsection{Budget and Dose Sensitivity}
+We next turn from prior strength to the split between current and history evidence.
+%
+On OmniGUI we hold the dose fixed and compare the two budgets in a $2{\times}2$ test.
+%
+Halving the current budget costs $5.29\%$, while halving the history budget costs $0.74\%$.
+%
+The current frame therefore carries most of the useful evidence, and the adopted setting keeps a larger current budget with a smaller history budget.
+%
+After this split is fixed, the dose spends part of each budget on covering tokens that greedy selection would drop.
+%
+Most multi-step benchmarks use a light dose.
+%
+Sparse AndroidControl is the exception and needs heavier repair on the current frame.
+%
+On the adopted OmniGUI tight setting, the history-dose grid changes Step~SR only slightly.
+%
+In contrast, the AndroidControl current-dose curve moves across the uniform baseline.
+%
+History retirement can therefore stay light, while the current dose must follow the domain.
+%
+Fig.~\ref{fig:dose} then shows how large that current dose should be on ScreenSpot-v2.
+%
+A moderate number of stride representatives improves the greedy keep.
+%
+A full dose removes the importance order and reduces the selector to uniform sampling.
+%
+Alternative scan rules stay within $1.5\%$ of the adopted dose.
+%
+The gain therefore comes from coverage repair itself rather than from a particular scan.
+%
+The adopted setting uses a larger current budget, a light history dose, and a current dose that repairs coverage gaps without collapsing to uniform sampling.
+%
+\subsubsection{Calibration and Robustness}
+The previous paragraphs fix the prior, the budgets, and the doses.
+%
+We now test whether those choices remain usable when two inputs are imperfect.
+%
+Both tests use ScreenSpot-v2 at $\keepr=10\%$.
+\\
+\noindent\cnum{1}~\textit{Detector degradation.}
+The first test removes detections at random.
+%
+Fig.~\ref{fig:robustness} (a) drops $25\%$, $50\%$, $75\%$, and $100\%$ of the boxes.
+%
+Accuracy falls from $73.90\%$ to $68.55\%$, $64.15\%$, $55.82\%$, and $53.85\%$.
+%
+The decrease is gradual rather than sudden.
+%
+When every detection is removed, the prior becomes flat and selection uses only instruction likelihood, feature diversity, and coverage repair.
+%
+That endpoint stays $10.1\%$ above uniform sampling.
+%
+The remaining channels therefore bound the damage, and the method does not collapse when the detector fails.
+%
+\noindent\cnum{2}~\textit{Instruction-likelihood temperature.}
+The second test changes the temperature $\tau$ that scales the instruction-likelihood scores.
+%
+As shown in Fig.~\ref{fig:robustness} (b), the adopted $\tau=1$ lies on a plateau with $\tau=2$ and changes accuracy by only $0.9\%$.
+%
+Sharpening to $\tau=0.5$ concentrates relevance on too few tokens and loses $10.5\%$.
+%
+Flattening to $\tau=4$ dilutes the instruction signal and loses $7.1\%$.
+%
+We therefore keep the default $\tau=1$ in every experiment and do not tune it.
+%
+The selector remains usable when detections are incomplete and when the relevance scale is left at its default.
+%
+These analyses show that our \method{} is robust to imperfect inputs.
+\section{Additional Experimental Evidence}
+\label{app:evidence}
+The previous section fixes the method, comparison protocol, and operating points. We now examine what is preserved when a visual frame is selected once and reused at a smaller history budget.
+%
+We follow four evidence chains. Lifecycle traces test later-target retention and nested retirement. Benchmark tables locate gains across budgets, metrics, categories, and model scales. Ablations connect those gains to selector components. Serving measurements separate cache reuse from selection cost.
+%
+Section~\ref{app:premise} examines admission and retirement, while Section~\ref{app:supp-results} expands the benchmark results.
+%
+Section~\ref{app:supp-ablation} combines component ablations with keep visualizations, and Section~\ref{app:efficiency} separates cache reuse from token-selection cost.
+%
+Each diagnostic answers a different question. Keep visualizations show spatial allocation on the displayed frame. Paired ablations measure score changes. Serving measurements report the evaluated execution path.
+%
+Detailed descriptions are as follows.
+\subsection{Lifecycle Behavior}
+\label{app:premise}
+This subsection tests the two premises of Fig.~\ref{fig:evidence} on instrumented trajectories.
+%
+The first is that a keep written at first admission should contain later targets.
+%
+The second is that the history keep should be a prefix of the current keep to avoid re-encoding.
+%
+We first measure later-target retention. 
+%
+Then, we compare nested retirement with independent re-selection. Finally, we inspect the cache states.
+\\
+\noindent\cnum{1}~\textit{Admission Retention.}
+Same-screen recurrences are identified by an exact content hash or a $64$-bit dhash within Hamming distance $4$ at the same resolution.
+%
+At the mild and tight budgets, \method{} retains $96.09\%$ and $91.41\%$ of the later targets, while existing methods perform near chance.
+%
+The relevant quantity is later-target retention rather than success on the instruction available at admission. A keep can serve the present action yet omit another widget on the same screen.
+%
+The layout prior reserves evidence beyond the action used at admission on these recurrences. It does not guarantee recovery of every later action.
+%
+Retirement poses the same question after the keep is contracted.
+%
+Admission error is the rate at which the contracted history loses the patch needed by a later action.
+%
+It is $12.37\%$ and $20.23\%$ for \method{} at the two budgets, against about $72\%$ for uniform.
+%
+The comparison uses the same retirement budgets, so token count alone does not explain the difference.
+%
+The retained prefix contains the later target more often, demonstrating the effectiveness of the layout prior.
+\\
+\noindent\cnum{2}~\textit{Nested Reuse.}
+Independent re-selection then asks whether that prefix is forced by serving.
+%
+On OmniGUI it requests tokens outside the admitted cache on $99.5\%$ and $99.1\%$ of frames.
+%
+Those requests can be satisfied only by encoding the retired frame again.
+%
+Forcing the independent choice onto the surviving rows changes Step~SR by only $-0.7\%$ and $-0.4\%$.
+%
+Fig.~\ref{fig:g-nested} shows that restriction on one frame.
+\begin{figure}[t]
+\centering
+\includegraphics[width=\linewidth]{figures/figG5_nested_vs_independent.pdf}
+\caption{Comparison of nested retirement against an unconstrained re-selection with \textbf{GUI-Owl-1.5-8B}. A fresh selection of $65$ tokens would add $12$ and drop $12$ that the committed prefix keeps. Over $1000$ steps the same re-selection moves $23.5\%$ of the surviving set.}
+\label{fig:g-nested}
+\end{figure}
+%
+The first panel is the nested prefix of $65$ tokens.
+%
+The second panel is an independent re-selection of $65$ tokens scored from scratch.
+%
+The last two panels show the two sides of the symmetric difference: tokens selected only by the fresh selection and tokens selected only by the committed prefix.
+%
+Independent selection would add $12$ tokens that the prefix does not contain and would drop $12$ tokens that the prefix keeps.
+%
+Over the same $1000$ steps, fresh re-selection changes $23.5\%$ of the surviving set.
+%
+The nested order is therefore a serving constraint rather than a relabeling of independent selection.
+%
+In particular, equal token counts do not imply equal cache contents. The independent selection changes token identities, whereas contraction must use the order already committed.
+\\
+\noindent\cnum{3}~\textit{Committed Cache.}
+The remaining figures follow one path.
+%
+They show the committed prefix, what one episode keeps after retirement, and how a single frame is contracted.
+%
+Selected patches keep the original pixels.
+%
+Discarded patches are desaturated so the dropped content stays visible.
+%
+Specifically, Fig.~\ref{fig:admit-timeline} (a) records one OmniGUI episode.
+\begin{figure}[t]
+\centering
+\includegraphics[width=1\linewidth]{figures/figA6_commit_timeline.pdf}
+\caption{Committed lifecycle with \textbf{GUI-Owl-1.5-8B}. (a)~An OmniGUI episode admits at about $50\%$ and retires to a $10\%$ prefix with zero nesting violations. (b)~On ScreenSpot-v2 at $\keepr=10\%$, the keep of \method{} grounds $82.5\%$ of frames against $40.0\%$ without the prior.}
+\label{fig:admit-timeline}
+\end{figure}
+%
+The light keep is current at about $50\%$.
+%
+The dark keep is the $10\%$ prefix that survives retirement.
+%
+The bars stay at those two levels on every step, and the figure records zero nesting violations.
+%
+No token is re-admitted after the frame is written, which is the prefix cut of Eq.~\ref{eq:admit}.
+%
+Fig.~\ref{fig:admit-timeline} (b) compares \method{} with the no-prior keep on ScreenSpot-v2 at $\keepr=10\%$.
+%
+When the instruction is to launch the photos app, both keeps hit.
+%
+When the instruction is to check the AirDrop setting, the prior holds the settings row and \method{} hits, while the keep without the prior misses.
+%
+When the instruction is to view notifications, both keeps miss a tiny toggle.
+%
+Over the $120$ frames, \method{} reaches $82.5\%$ grounding accuracy against $40.0\%$ without the prior.
+%
+The two keeps differ by the prior rather than by a second admission. 
+%
+Besides the above visual evidence, we read OmniGUI Alipay episode T0039 frame by step as shown in Fig.~\ref{fig:g-matrix}.
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.815\linewidth]{figures/figG3_lifecycle_matrix.pdf}
+\caption{Cache state of OmniGUI Alipay episode T0039 with \textbf{GUI-Owl-1.5-8B} at $(\keepc,\keeph)=(50\%,10\%)$. The left column is the input. The upper triangle is that frame's cache. The diagonal is admission. The same frame to the right of the diagonal is the contracted history.}
+\label{fig:g-matrix}
+\end{figure}
+%
+The left column is the input and the action on that screen.
+%
+The upper triangle is the cache.
+%
+On the diagonal the frame is admitted at $\keepc=50\%$ and split into tokens that will survive and tokens that will be evicted.
+%
+Every frame to the right of the diagonal is held after contraction to $\keeph=10\%$.
+%
+A row does not change after admission because history is write-once.
+%
+The episode opens Yu'ebao from Me and then completes the red-packet flow.
+%
+The six actions are tap Me, tap Yu'ebao, tap Open, tap Participate, tap Accept, and tap Claim reward.
+%
+The acted-on widget on each current-frame keep remains in the contracted keep of that row.
+%
+The cache keeps the acted-on evidence of each page rather than only the latest screenshot.
+%
+Fig.~\ref{fig:g-retire} then dissects four frames.
+\begin{figure}[t]
+\centering
+\includegraphics[width=1\linewidth]{figures/FigG4.pdf}
+\caption{Retirement dissected on four frames with \textbf{GUI-Owl-1.5-8B}. Each row is the input, the admitted keep, the surviving prefix, and the tokens retirement frees.}
+\label{fig:g-retire}
+\end{figure}
+%
+Each row shows the input, the admitted keep, the survivors, and the complement that retirement frees.
+%
+The surviving prefix is a subset of the admitted keep, while the released tokens form the complement of that prefix within the admitted set.
+%
+Thus, the survivor and released panels are disjoint, and together they reconstruct the admitted keep. Only the survivor is nested within the original selection.
+%
+The marked target remains in the survivor panel on the displayed frames. This illustrates what contraction preserves and frees without implying that every removed patch is irrelevant to all possible future actions.
+%
+The committed cache retains the displayed later-usable evidence after retirement. The nested prefix is not rebuilt.
+%
+These visualizations provide additional evidence to demonstrate the robustness of our proposed \method{}.
+\subsection{Benchmark Breakdowns}
+\label{app:supp-results}
+\label{app:full}
+We unpack Tab.~\ref{tab:main-combined} along four axes. The tables separate target categories from action metrics. The budget curves show where margins change. The 2B tables test the same comparisons at another scale.
+%
+Throughout this subsection, benchmark averages report accuracy, while the Avg.\,(\%) column reports average retained performance relative to the dense model.
+%
+Details are as follows.
+\\
+\noindent\textbf{Single-step Breakdown.}
+\noindent\textit{(1) Tight-budget grounding.}
+As shown in Tab.~\ref{tab:main-single}, \method{} reaches $73.90\%$, $37.63\%$, and $50.47\%$ on ScreenSpot-v2, ScreenSpot-Pro, and MMBench-GUI at $\keepr=10\%$.
+%
+These scores retain $64.5\%$ of dense performance on average.
+%
+Specifically, \method{} leads PruneSID by $14.94\%$ on ScreenSpot-v2 and VisPruner by $8.12\%$ on MMBench-GUI, while VisionTrim remains ahead by $0.89\%$ on ScreenSpot-Pro.
+%
+At $\keepr=5\%$, the corresponding scores fall to $55.19\%$, $20.30\%$, and $30.88\%$, but \method{} ranks first on all three benchmark averages.
+%
+Its margin over PruneSID on ScreenSpot-v2 grows to $20.99$ points, and the comparison with VisionTrim on ScreenSpot-Pro turns to $+2.08$ points.
+%
+Thus, the larger relative advantage at the tight budget does not mean that pruning preserves absolute accuracy. It means that \method{} loses less task performance than the compared selectors at the same budget.
+%
+\noindent\textit{(2) Higher-retention budgets.}
+Tab.~\ref{tab:supp-single} extends the comparison to $\keepr=50\%$ and $25\%$.
+%
+On the 8B model at $\keepr=50\%$, \method{} reaches $93.08\%$ on ScreenSpot-v2 and $81.39\%$ on MMBench-GUI, compared with dense scores of $93.79\%$ and $82.64\%$ in Tab.~\ref{tab:main-single}.
+%
+However, its $67.30\%$ on ScreenSpot-Pro trails VisPruner's $69.20\%$.
+%
+At $\keepr=25\%$, \method{} reaches $90.33\%$, $58.25\%$, and $72.45\%$ on the three benchmarks, while VisionTrim leads ScreenSpot-Pro at $60.09\%$.
+%
+The upper panels of Fig.~\ref{fig:budget-curves} summarize this distinction. The margins widen on ScreenSpot-v2 and MMBench-GUI as the budget tightens, whereas ScreenSpot-Pro shows a crossover rather than a consistent lead.
+%
+The blue curve selects the best published baseline separately at each budget, so it need not represent the same method throughout the sweep.
+\\
+\noindent\textbf{Multi-step Breakdown.}
+\noindent\textit{(1) Joint action success.}
+Tab.~\ref{tab:main-multi} separates Step~SR from action type, element accuracy, operation F1, and grounding.
+%
+Step~SR requires the action type and its target or argument to be correct together, so a strong auxiliary score does not by itself imply a successful step.
+%
+At $(\keepc,\keeph)=(50\%,10\%)$, \method{} reaches $48.91\%$, $45.52\%$, and $60.20\%$ Step~SR on OmniGUI, Mind2Web, and AndroidControl.
+%
+At $(\keepc,\keeph)=(25\%,5\%)$, these scores become $43.08\%$, $34.20\%$, and $57.06\%$.
+%
+The average retained performance decreases from $93.0\%$ to $80.4\%$, while the lead over the best published baseline grows from $0.74$ to $2.99$ points on OmniGUI and from $0.54$ to $3.53$ points on Mind2Web.
+%
+The lower panels of Fig.~\ref{fig:budget-curves} show these budget-dependent comparisons alongside the dense and uniform references.
+%
+On tight-budget AndroidControl, the distinction between references matters. \method{} leads the best published baseline, ZOO-Prune, by $1.30$ points, but its margin over the stronger uniform control is $0.93$ points.
+%
+\input{tables/main_single}
+\begin{figure}[t]
+\centering
+        \includegraphics[width=0.86\linewidth,height=0.40\textheight,keepaspectratio]{figures/fig3_budget_curves.pdf}
+        \caption{Accuracy versus keep ratio with \textbf{GUI-Owl-1.5-8B}. The top row shows single-step grounding. The bottom row shows multi-step Step~SR. The blue curve uses the best published baseline at each budget, while uniform is shown separately for reference.}
+        \label{fig:budget-curves}
+\end{figure}
+    \label{app:m2w}
+\noindent\textit{(2) Auxiliary metrics.}
+The AndroidControl columns also show why the native metrics should be read separately.
+%
+At the tight budget, VisionTrim reaches $67.76\%$ grounding accuracy, above \method{}'s $65.50\%$, yet its Step~SR is lower at $55.16\%$ versus $57.06\%$.
+%
+Meanwhile, \method{} reaches $82.06\%$ action-type accuracy, compared with $81.26\%$ for VisionTrim.
+%
+These results demonstrate the advantage of our proposed \method{} in different metrics.
+\input{tables/main_multi}
+\input{tables/supp_single}
+\\
+\noindent\textbf{Mind2Web Metric Breakdown.}
+The pooled Mind2Web columns in Tab.~\ref{tab:main-multi} distinguish target selection from operation prediction.
+%
+At the mild budget, \method{} reaches $53.02\%$ element accuracy and $45.52\%$ Step~SR, compared with $47.48\%$ and $39.65\%$ for uniform.
+%
+At the tight budget, the corresponding scores are $39.41\%$ and $34.20\%$ for \method{}, against $26.32\%$ and $20.61\%$ for uniform.
+%
+In contrast, operation F1 stays close between the two methods, at $84.28\%$ versus $84.35\%$ under the mild budget and $83.90\%$ versus $83.49\%$ under the tight budget.
+%
+The larger differences therefore occur in element accuracy and joint step success, rather than operation F1.
+%
+Detailed breakdowns can help us understand the robustness of our proposed \method{} under specific scenarios.
+\\
+\noindent\textbf{Cross-scale Evaluation.}
+We next compare the same benchmark metrics on GUI-Owl-1.5-2B.
+%
+\noindent\textit{(1) Single-step transfer.}
+As shown in Tab.~\ref{tab:supp-2b-single}, \method{} reaches $55.11\%$, $17.33\%$, and $38.17\%$ on ScreenSpot-v2, ScreenSpot-Pro, and MMBench-GUI at $\keepr=10\%$.
+%
+At $\keepr=5\%$, it reaches $38.29\%$, $6.83\%$, and $21.93\%$.
+%
+It ranks first on all three benchmark averages at both budgets, retaining $48.0\%$ and $28.2\%$ of dense performance on average.
+%
+However, the category columns show a narrower advantage than the benchmark ranks alone suggest. On ScreenSpot-Pro at $\keepr=5\%$, \method{} leads FastV on text targets at $6.86\%$ versus $5.53\%$, but trails on icon targets at $6.79\%$ versus $8.28\%$.
+%
+Its overall lead is only $0.25$ points, from $6.83\%$ versus $6.58\%$.
+%
+Thus, ranking first on the smaller model does not imply either high absolute accuracy or a lead on every target category.
+%
+\noindent\textit{(2) Multi-step transfer.}
+Tab.~\ref{tab:supp-2b-multi} reports $36.08\%$, $37.92\%$, and $56.53\%$ Step~SR for \method{} on OmniGUI, Mind2Web, and AndroidControl at the mild budget.
+%
+The tight-budget scores are $31.88\%$, $26.52\%$, and $53.72\%$.
+%
+These retain $91.4\%$ and $77.7\%$ of dense performance on average across the three benchmarks.
+%
+\method{} leads OmniGUI at both budgets, but FastV remains ahead on Mind2Web at $38.98\%$ and $27.62\%$, while PruneSID remains ahead on AndroidControl at $57.03\%$ and $54.13\%$.
+%
+The cross-scale result therefore preserves competitiveness without preserving the 8B lead on every multi-step benchmark.
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.92\linewidth,height=0.40\textheight,keepaspectratio]{figures/figA7_rank_stability.pdf}
+\caption{Cross-scale rank comparison between \textbf{GUI-Owl-1.5-8B} and \textbf{GUI-Owl-1.5-2B}. Each panel shows the ten-method comparison plotted for one benchmark. Stars mark \method{}, dots mark existing methods, and the dotted diagonal denotes equal ranks.}
+\label{fig:rank-stability}
+\end{figure}
+\noindent\textit{(3) Rank stability.}
+Fig.~\ref{fig:rank-stability} separates the rank of \method{} from changes in the overall method ordering.
+%
+In the plotted comparisons, \method{} remains first on ScreenSpot-v2, MMBench-GUI, and OmniGUI, and moves from second to first on ScreenSpot-Pro.
+%
+It moves from first to fourth on pooled Mind2Web and AndroidControl.
+%
+Tab.~\ref{tab:scale-rep} provides the complementary budget-level view with twelve methods, rather than the ten plotted in the figure, and lists the three Mind2Web splits separately.
+%
+In that table, \method{} remains first on ScreenSpot-v2 and MMBench-GUI at all four keep ratios and on OmniGUI at both current/history budgets.
+%
+However, its 2B rank is fourth on each mild-budget Mind2Web split and ranges from second to third at the tight budget.
+%
+The full ordering can change even when the top-ranked method does not. For example, the table reports Spearman $\rho=0.109$ and $0.091$ on MMBench-GUI at $\keepr=10\%$ and $5\%$, while \method{} remains first.
+%
+These results distinguish stability of the leading method from agreement among all selectors.
+\input{tables/supp_2b_single}
+\input{tables/supp_2b_multi}
+\input{tables/scale_rep}
+\\
+\noindent\textbf{Target-category Breakdown.}
+Finally, the category columns in Tabs.~\ref{tab:supp-single} and~\ref{tab:main-single} show which targets contribute to the benchmark averages.
+%
+On 8B ScreenSpot-Pro at $\keepr=25\%$, \method{} leads VisionTrim on text targets at $68.88\%$ versus $67.76\%$, but trails on icon targets at $41.06\%$ versus $47.68\%$.
+%
+This text--icon contrast accompanies the lower overall score of $58.25\%$ versus $60.09\%$.
+%
+At $\keepr=5\%$, \method{} still trails VisionTrim on icons at $11.26\%$ versus $13.74\%$, but its text accuracy of $25.90\%$ versus $20.98\%$ is accompanied by a higher benchmark average.
+%
+The crossover in Fig.~\ref{fig:budget-curves}(b) therefore does not indicate that \method{} overtakes VisionTrim on both target types.
+%
+On MMBench-GUI at the same tight budget, the advantage is present in both reported categories. \method{} reaches $40.51\%$ on Basic and $21.36\%$ on Adv., compared with FastV's $25.46\%$ and $15.61\%$.
+%
+Together, these breakdowns locate the gains in the reported categories and metrics for comprehensive understanding.
+\subsection{Ablations and Visual Evidence}
+\label{app:supp-ablation}
+
+The benchmark breakdowns identify the settings where \method{} gains or loses accuracy. We next examine how the selection changes under component removal and how those changes appear in the retained patches.
+%
+The ablations compare task scores, while the visualizations expose target coverage and the spatial distribution of the keep.
+%
+Detailed analysis is provided as follows.
+\\
+\noindent\textbf{Keep Maps.}
+\label{app:viz}
+Fig.~\ref{fig:keepmaps} compares three token selections on the same frame at $\keepr=10\%$. The first two panels establish the visual reference. Panel (a) shows the original screen and its target. Panel (b) shows the query-independent \lmp{} field over that screen. The remaining panels show the tokens retained by \method{} and the two controls.
+%
+This arrangement connects the layout prior to the resulting selection. The target remains covered by \method{} and is marked HIT. Both the no-prior arm and uniform sampling are marked MISS. The example therefore shows a target-coverage difference at a matched budget.
+%
+We next examine how this spatial allocation changes with the budget. Fig.~\ref{fig:keep-maps} in the main text introduces a second screen. Fig.~\ref{fig:g-budget} extends that comparison across four selectors on the same screen. The two views serve complementary purposes. The first identifies which selection covers a given target. The second tracks the retained spatial structure as the budget contracts.
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.99\linewidth,height=0.40\textheight,keepaspectratio,trim=0 367 0 0,clip]{figures/fig5_keepmaps.pdf}
+\caption{Selection outcomes with \textbf{GUI-Owl-1.5-8B} at $\keepr=10\%$. Panels (a) through (e) show the input, the \lmp{} field, and the keeps of \method{}, no-prior, and uniform.}
+\label{fig:keepmaps}
+\end{figure}
+\\
+\noindent\textbf{Coverage Recall.}
+Area coverage does not distinguish background patches from operable elements. The recall diagnostic behind Fig.~\ref{fig:modules} instead asks whether an element retains at least one token.
+%
+The reported recall of \method{} is $90.06\%$ on the $120$-frame dump.
+%
+The detector defines the elements used in this diagnostic. The recall therefore measures coverage of its proposals rather than coverage of every true interface element. A surviving token also need not contain enough detail to identify the element correctly.
+%
+We therefore use this statistic to interpret the spatial footprint of the keep. Task accuracy remains a separate measure of whether the retained evidence supports a correct prediction.
+\\
+\noindent\textbf{Coverage Coupling.}
+The paired repair comparison associated with Fig.~\ref{fig:modules} records $44$ rescued targets and $5$ lost targets.
+%
+Repair reallocates a fixed token budget. It can therefore recover one target at the expense of another. The paired counts expose both outcomes instead of reducing them to an average coverage change.
+%
+Recoveries outnumber losses on these frames. The five losses nevertheless show that repair does not benefit every image.
+%
+Tab.~\ref{tab:ablation-main} supplies the corresponding task-level comparison with the prior and ordering enabled. Adding repair raises tight-budget ScreenSpot-v2 accuracy from $38.36\%$ to $55.19\%$. The same addition raises tight-budget ScreenSpot-Pro accuracy from $28.15\%$ to $37.63\%$.
+%
+Thus, spatial repair recovers more targets on dense GUI screens, and the same addition raises accuracy on both grounding benchmarks under the prior and ordering. 
+\\
+\noindent\textbf{Ablation Summary.}
+Fig.~\ref{fig:ablation-forest} collects the component-removal comparisons. Positive $\Delta$ denotes the accuracy lost when the named component is removed.
+%
+The prior-removal deltas on ScreenSpot-v2 grow from $20.05$ points at $\keepr=10\%$ to $23.74$ points at $\keepr=5\%$. On ScreenSpot-Pro, they grow from $13.79$ points at $\keepr=25\%$ to $16.51$ points at $\keepr=10\%$.
+%
+The factor knockouts then separate the instruction term from the diversity term. Removing the instruction term costs $15.57$ points on tight ScreenSpot-v2. Removing diversity costs $5.35$ points under the same setting. The corresponding ScreenSpot-Pro losses are $14.17$ and $4.74$ points.
+%
+Both terms contribute to the reported score. The larger instruction-term losses show that their contributions are not interchangeable.
+%
+The figure also reports a $6.41$-point Mind2Web delta for the removed NCR, demonstrating the contribution of the spatial coverage repair under the multi-step setting.
+%
+Together, these results fully demonstrate the effectiveness of each component on the overall performance of our proposed \method{}.
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.80\linewidth]{figures/figA8_ablation_forest.pdf}
+\caption{Ablation forest of different components in \method{} with \textbf{GUI-Owl-1.5-8B}.}
+\label{fig:ablation-forest}
+\end{figure}
+\label{app:mmbench}
+\\
+\noindent\textbf{MMBench Prior-strength Interaction.}
+Tab.~\ref{tab:alpha-sens} reports the prior-strength sweep for MMBench-GUI at $\keepr=25\%$.
+%
+The scores are $71.06\%$, $72.15\%$, $72.34\%$, and $72.45\%$ across the four displayed strengths.
+%
+The largest improvement occurs before the strongest setting. Increasing $\bar{\alpha}$ from $4$ to $6$ adds only $0.11$ points.
+%
+The score increases throughout this sweep. Most of the gain is already present before the final increase in prior strength. This experiment varies prior weighting rather than coverage repair. It therefore does not isolate the contribution of spatial coverage repair.
+\\
+\noindent\textbf{Layout Prior Comparison.}
+\label{app:parity}
+Only \method{} uses an external detector in the main tables. This creates an information asymmetry between selectors. The layout prior comparison tests whether giving each selector the same layout prior closes the accuracy gap.
+%
+To remove this information asymmetry, we graft the same OmniParser interaction-density field into the official scoring rule of each compatible baseline at its best prior strength.
+%
+Each compatible baseline receives its own best prior strength. This gives the baseline a favorable use of the shared signal. An empty detection set reduces each arm to its official rule.
+%
+Fig.~\ref{fig:parity} summarizes the layout prior results on ScreenSpot-v2. Tab.~\ref{tab:layout-prior} reports the corresponding accuracies under Own rule and + prior. Best $\alpha$ records the selected strength for each baseline. Transfer measures the change from Own rule to + prior. Gap to \method{} measures how far the + prior score falls below \method{}. Both differences are reported in percentage points (pp).
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.92\linewidth]{figures/fig_parity.pdf}
+\caption{Layout-prior transfer and ordering ablation with
+\textbf{GUI-Owl-1.5-8B} on ScreenSpot-v2.
+(a) Layout-prior transfer analysis under
+matched budgets. Dashed lines mark
+\method{}, and arrows indicate the gap between \method{} and the best
+prior-augmented selector.
+(b) Comparison of prior-only top-$k$, uniform sampling, the strongest existing
+selector, and \method{} under the same budgets.}
+\label{fig:parity}
+\end{figure}
+\input{tables/layout_prior_comparison}
+\\
+Specifically, Tab.~\ref{tab:layout-prior} shows that the layout prior improves most baselines. The best compatible result nevertheless trails \method{} by $13.37$ points at the mild budget and $20.83$ points at the tight budget.
+%
+The different responses also show that the detector prior cannot be treated as a universal replacement for each selector's scoring rule.
+%
+The prior-only top-$k$ rows in Tab.~\ref{tab:layout-prior} provide another perspective on the layout prior comparison.
+%
+These rows select tokens directly from the prior without evidence ordering. They reach $32.63\%$ at the mild budget and $17.06\%$ at the tight budget. These scores fall below the complete method by $41.27$ and $38.13$ points.
+%
+The shared prior improves several selectors, but the remaining gaps show that it does not replace evidence ordering.
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=\linewidth]{figures/figG1_keep_gallery.pdf}
+    \caption{Keep gallery with \textbf{GUI-Owl-1.5-8B} at $\keepr=10\%$.}
+    \label{fig:g-gallery}
+    \end{figure}
+\\
+\noindent\textbf{Keep Gallery.}
+\label{app:gallery}
+Fig.~\ref{fig:g-gallery} presents a five-column by three-row gallery at $\keepr=10\%$. 
+%
+From left to right, the columns correspond to Battery Low Power Mode, the home screen target “launch the photos app,” General AirDrop, Account Notifications, and Tencent Meeting email login. 
+%
+The top row shows the input screens, the middle row visualizes the detector and its layout prior, and the bottom row shows the retained token field. 
+%
+The detector identifies 16, 41, 25, 9, and 23 elements in the five examples, respectively.
+%
+Four examples are marked as HIT and one as MISS. 
+%
+The Battery example retains the low-power-mode control, while the home-screen example preserves the Photos target. 
+%
+The AirDrop example retains the relevant settings row, and the Tencent Meeting example preserves the email-login region. 
+%
+The Notifications example is the only MISS because the tiny notification control is not sufficiently represented in the retained tokens. 
+%
+This gallery therefore illustrates both the intended behavior and a concrete failure case for small targets rather than suggesting that the layout prior succeeds uniformly.
+%
+Across the five examples, the middle row concentrates mass on detected interface regions, while the bottom row distributes native token marks over these regions and their nearby context. 
+%
+The reported element counts refer to detector proposals rather than retained-token counts, and the green boxes indicate the requested targets rather than dataset-level accuracy. 
+%
+These visualizations show how layout evidence guides token allocation while also exposing an important limitation. 
+%
+A detected element may still be too small to support reliable grounding.
+\\
+\noindent\textbf{Budget Tightening.}
+Fig.~\ref{fig:g-budget} holds one screen fixed while the budget tightens from $50\%$ to $5\%$.
+%
+The coverage-repaired keep retains a wider spatial skeleton than instruction-conditioned scoring at the same budget.
+%
+The target-count annotations make the comparison more specific than the total colored area. At the tightest budget \method{} retains three of the four marked targets. The instruction-conditioned comparison retains one.
+%
+The screen and marked targets remain fixed throughout the comparison. The change therefore reflects the allocation of a limited token set rather than a change in screen difficulty. The target counts describe this screen alone and are not dataset-wide accuracy rates.
+%
+The comparison shows how spatial coverage changes under matched budgets. The selectors also differ in other components, so the paired ablations provide the task-level evidence for repair.
+\begin{figure}[t]
+\centering
+\includegraphics[width=\linewidth]{figures/figG2_budget_ladder.pdf}
+\caption{Budget tightening on one screen with \textbf{GUI-Owl-1.5-8B}.}
+\label{fig:g-budget}
+\end{figure}
+\\
+\noindent\textbf{Detector to Prior.}
+Fig.~\ref{fig:g-detector} maps detected boxes onto the token grid before constructing the prior field.
+%
+The displayed frame contains $64$ regions on a $40\times18$ grid. Their union covers $430$ of the $720$ tokens, or about $60\%$ of this frame.
+%
+The final panel shows a mass field rather than a binary keep mask. Detection assigns spatial weights to the candidate tokens. The ordering and coverage rules then use these weights to select native tokens under the budget.
+%
+This distinction matters because detected regions can occupy more tokens than the keep permits. The detector alone does not specify how to allocate the remaining capacity among those regions.
+\begin{figure}[t]
+\centering
+\includegraphics[width=\linewidth]{figures/figG6_detector_to_prior.pdf}
+\caption{From detected elements to a token-level prior with \textbf{GUI-Owl-1.5-8B}.}
+\label{fig:g-detector}
+\end{figure}
+\\
+\noindent\textbf{Selector Comparison.}
+Fig.~\ref{fig:g-selectors} compares selectors at $\keepr=10\%$ on identical frames and matched token counts.
+%
+The columns show \method{}, CDPruner, DivPrune, the no-prior and no-repair arms, and uniform.
+%
+Every displayed selection is annotated as target kept. The comparison therefore concerns the surrounding spatial footprint rather than a target-retention advantage. It shows how the rules distribute their remaining capacity after retaining the target.
+%
+The component-removal columns expose changes in the distribution of retained patches. Their task-level consequences must be read from the ablation results rather than inferred from the appearance of the keep alone.
+%
+Fig.~\ref{fig:parity} complements this visual comparison by holding the detector output fixed. Its remaining accuracy gaps show that access to the same layout field does not make the selection rules equivalent.
+\begin{figure}[t]
+\centering
+\includegraphics[width=\linewidth]{figures/figG7_selector_comparison.pdf}
+\caption{Every selector at $\keepr=10\%$ on identical frames with \textbf{GUI-Owl-1.5-8B}.}
+\label{fig:g-selectors}
+\end{figure}
+\subsection{Serving Efficiency}
+\label{app:efficiency}
+This subsection measures the serving benefit of lifecycle reuse and separates it from selector cost.
+\\
+\noindent\cnum{1}~\textit{End-to-end Serving Result.}
+Tab.~\ref{tab:main-efficiency} compares the complete serving path on OmniGUI under the mild budget. 
+%
+The dense baseline processes 4,892 visual tokens and 73,385 GFLOPs, resulting in 1,102.6 ms TTFT and 2,958.2 ms end-to-end latency with a Step~SR of 52.45.
+%
+The pruned methods reduce the reported input to about 2,011 tokens and 30,170 GFLOPs while reducing the visual KV cache from 697\,MB to 292\,MB. 
+%
+Here, In.Tok denotes the input-token count reported by the table and should not be interpreted as the number of visual tokens alone.
+%
+The latency ranking reflects the trade-off between selection overhead and the resulting reduction in prefill cost. FastV reports no separate selection cost, yet still uses 38,731 GFLOPs and an In.Tok value of 4,892. 
+%
+Its TTFT is 850.7 ms and its end-to-end latency is 2,723.2 ms. Thus, Sel.=0 indicates that no separate selector cost is charged in the table rather than that FastV performs no internal scoring or computation. Among methods that retain 2,011 tokens, TRIM incurs only 10.0 ms of selection time and achieves 721.1 ms TTFT. In contrast, PruneSID spends 740.0 ms on selection, which raises its TTFT to 1,506.9 ms and its end-to-end latency to 3,542.4 ms. ZOO-Prune also incurs 69.5 ms of selection time and reaches 3,015.7 ms end-to-end latency despite achieving a Step~SR of 48.17.
+%
+Our method combines a 67.1 ms selection cost with the lowest TTFT of 453.9 ms and the lowest end-to-end latency of 2,295.8 ms. Compared with dense serving, it reduces TTFT by 648.7 ms and end-to-end latency by 662.4 ms while achieving a Step~SR of 48.91, which retains 93.3\% of the dense score. 
+%
+This result shows that the serving benefit does not come from pruning alone. 
+%
+The method reduces the prefill workload while keeping selection overhead on the critical path substantially below the cost incurred by methods such as PruneSID. 
+%
+More broadly, the results indicate that end-to-end serving latency depends on both the cost of selection and the amount of visual state that can be reused after pruning.
+%
+Once the selection cost is higher than the prefill benefit, the serving cost instead increases.
+\input{tables/main_efficiency}
+\\
+\noindent\cnum{2}~\textit{Attribution of the Gain.}
+%
+Tab.~\ref{tab:efficiency} separates cache reuse from token selection in a second and strictly serial measurement round on the same serving path.
+%
+The dense and complete-method TTFT values are $1116.8$ and $452.7$ ms, respectively, rather than the $1102.6$ and $453.9$ ms reported in Tab.~\ref{tab:main-efficiency}. We therefore make all comparisons within the same measurement round.
+%
+Applying \kvr{} alone reduces TTFT to $487.4$ ms without pruning the visual cache, so the visual KV entry remains at $100\%$. Adding the complete selector further reduces TTFT to $452.7$ ms at the mild budget and $397.8$ ms at the tight budget. At the same time, visual KV usage decreases by $58.1\%$ and $68.1\%$, respectively.
+%
+The LLM prefill time decreases from $328.6$ ms with reuse alone to $140.6$ and $101.9$ ms after selection. The corresponding selector-plus-prior costs are $67.4$ and $47.0$ ms. These measurements expose the two sides of the selection trade-off. Selection introduces additional computation before language-model processing, but it also shortens the visual sequence processed by the language model. Because some component operations overlap on the serving path, their timings cannot be directly summed to predict the final latency. The realized benefit is therefore best evaluated from the measured end-to-end latency.
+%
+The prior-plus-ordering arm provides a reference for the incremental cost of repair.
+%
+Adding repair changes the mild-budget TTFT from $451.7$ to $452.7$ ms, while the tight-budget TTFT changes from $399.1$ to $397.8$ ms. 
+%
+These differences indicate that repair introduces negligible TTFT overhead.
+\\
+\noindent\cnum{3}~\textit{Accuracy and latency are separate outcomes.}
+Tab.~\ref{tab:efficiency} also shows why TTFT and total latency must be distinguished. Tightening the budget reduces full-method TTFT from $452.7$ to $397.8$\ ms. End-to-end latency changes much less from $2298.9$ to $2291.5$\ ms.
+%
+The decode totals differ as well, at $1711.0$ and $1765.6$\ ms. A smaller prefill therefore does not imply the same proportional saving in total response time.
+%
+Together with the accuracy breakdowns, these measurements characterize a budget trade-off rather than an unqualified preference for the tightest setting.
+\input{tables/efficiency}
+\\
+\noindent\textbf{Dose and Within-episode Cost.}
+The two panels of Fig.~\ref{fig:dose-ttft} report separate measurements on separate benchmarks.
+%
+The left panel plots AndroidControl Step~SR against the current-frame dose. The mild-budget scores rise from $59.84\%$ through $59.91\%$ to $60.20\%$. The tight-budget curve reaches $55.45\%$ at dose $0.3$ and $56.58\%$ at dose $0.5$.
+%
+The star additionally enables the nested history rung and should not be read as another point on the current-dose-only curve. This separates the current-frame dose response from the adopted joint setting.
+%
+The right panel follows OmniGUI TTFT across successive steps within one episode. It does not vary the history-window length independently.
+%
+Both paths start near the same latency. The dense curve then rises much more sharply as steps accumulate. Its TTFT reaches $5.1\times$ that of \method{} at step $5$.
+%
+The widening gap is consistent with avoiding repeated encoding of retired frames. Reuse does not make latency constant. Its curve also rises overall and fluctuates between individual steps.
+%
+This visualization demonstrates the importance of cache reuse.
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.46\linewidth]{figures/figA2_dose.pdf}\hfill
+\includegraphics[width=0.50\linewidth]{figures/figA3_ttft_by_step.pdf}
+\caption{Current dose and within-episode TTFT with \textbf{GUI-Owl-1.5-8B}. The left panel shows the evaluation on AndroidControl. The right panel shows the evaluation on OmniGUI.}
+\label{fig:dose-ttft}
+\end{figure}
+\section{Transfer and Scope}
+\label{app:transfer}
+In this appendix, we provide the final evidence containing two transfer experiments followed by an analysis of scope and failure modes. 
+%
+Specifically, we first place existing selectors on the nested \kvr{} path to match their serving state. We then transfer \method{} to UI-TARS-1.5-7B with its native prompt and action grammar, without retuning the 8B configuration.
+%
+Details are provided below.
+\\
+\noindent\textbf{Nested-path Transfer.}
+Tab.~\ref{tab:transfer} places DivPrune, VisPruner, and ZOO-Prune on the same nested \kvr{} path at matched budgets. \method{} remains ahead by $0.88$--$9.62$ points across the reported settings.
+%
+All methods now use the same reusable cache path.
+%
+The differences therefore reflect the visual evidence admitted by their selection rules under matched serving conditions.
+%
+These results fully demonstrate the effectiveness and efficiency of \method{} on the nested \kvr{} path.
+
+\input{tables/transfer}
+
+\noindent\textbf{Transfer to UI-TARS.}
+\label{app:uitars}
+Tab.~\ref{tab:uitars-full} evaluates \method{} with UI-TARS's native prompt and action grammar. At the reported retention settings, \method{} leads ScreenSpot-Pro at $25\%$ and $5\%$ with average accuracies of $16.76\%$ and $3.04\%$. It also leads ScreenSpot-v2 at $25\%$ and $10\%$. The ranking is not uniform across benchmarks. DivPrune remains ahead on MMBench-GUI, while PruneSID leads several higher-retention settings. The transfer advantage is clearest at tighter budgets.
+\input{tables/uitars_full}
+\\
+\noindent\textbf{Configuration Check.}
+Tab.~\ref{tab:uitars-cal} checks the transferred configuration with the 8B protocol. The scores change by $0.13$--$0.63$ points, and the method rankings remain unchanged. The comparison is therefore stable without retuning the full configuration, which demonstrates the transferability.
+\input{tables/uitars_cal}
+\\
+\noindent\textbf{Multi-step Transfer.}
+\label{app:uitars-multi}
+Every arm uses UI-TARS's native action grammar on the adopted \kvr{} path. On the $1521$ of $2572$ OmniGUI steps with target locations, \method{} gains $1.05$ and $1.18$ points over the strongest baseline across the two budgets. On pooled Mind2Web, the margins are $2.80$ and $4.92$ points.
+%
+The gains appear on both the mobile OmniGUI actions and the web Mind2Web actions. All methods receive the same visual-context scope, while \method{} reuses cached rows from prior frames instead of re-encoding them. The transfer therefore preserves the same evidence-selection and cache-reuse comparison under a different backbone and action grammar.
+\input{tables/uitars_multi}
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=0.7\linewidth]{figures/figG8_failures.pdf}
+    \caption{Remaining failure cases with \textbf{GUI-Owl-1.5-8B}.}
+    \label{fig:g-failures}
+    \end{figure}
+\subsection{Limitations and Failure Modes}
+\label{app:limits}
+In this section, we discuss the trajectory horizon and failure modes of our proposed \method{}.
+\\
+\noindent\textbf{Trajectory Horizon.}
+%
+The evaluated episodes are short relative to the history horizon supported by our method. Most existing GUI benchmarks retain at most two or three historical frames, whereas we extend this horizon to five or six frames. As $H$ grows, the benefit of compact historical evidence reuse becomes increasingly pronounced, as reflected by the serving-cost expression $\mathcal{O}(k_c+Hk_h)$.
+%
+However, existing benchmarks rarely require evidence retrieval across long frame intervals. Most tasks can be solved from recent screens, which limits their ability to expose the advantage of longer history reuse. Evaluating this regime requires trajectories with larger temporal gaps between evidence and query screens. 
+%
+We leave this systematic evaluation on longer trajectories to future work.
+\\
+\noindent\textbf{Failure Modes.}
+On the recorded ScreenSpot-v2 run at $\keepr=5\%$, \method{} misses $503$ examples that the unpruned model solves. In $93.0\%$ of these failures, a retained token overlaps the target. Removing the target's spatial evidence accounts for only $0.8\%$ of the gap to dense.
+%
+The remaining errors occur mainly when the selector retains the target neighborhood but not enough detail for precise localization. The failure is therefore a precision problem under aggressive context reduction rather than a simple failure to reach the target region.
+%
+Besides the aforementioned precision problem, Fig.~\ref{fig:g-failures} shows thin or low-contrast widgets whose extent fits within a single patch. These widgets remain difficult to separate from the background after the budget is reduced. For this subset, increasing patch detail or improving the visual representation is more direct than token pruning.
