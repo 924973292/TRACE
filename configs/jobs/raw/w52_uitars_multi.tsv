@@ -1,0 +1,62 @@
+# W52 UI-TARS-1.5-7B multi-step, rebuilt on the ADOPTED GUI-Owl serving protocol.
+#
+# WHY THIS SUPERSEDES w46_uitars_multi.tsv. Every row of the W46 matrix carried
+# GEOPACT_SESSION_KV_FORCE=0, added there to hold serving constant across arms.
+# That flag is applied at run_qwen_a100_five_arm_one.sh:2426, AFTER the abc_r10
+# track exports GEOPACT_SESSION_KV=1, so it clobbers dialogue KV. Because
+# nap_two_stage_active() requires dialogue_kv_enabled(), it also silently killed
+# stage-1 current-frame pruning, i.e. it changed the SELECTOR, not just the
+# serving path. Measured consequences in logs/w46_uitars_multi/omnigui:
+#   sliding_rewrite fired on 0/2572 steps (GUI-Owl adopted: 1864/2572)
+#   keep_ratio == 1.0 on exactly 708 steps, one per episode (current frame unpruned)
+#   GEOPACT_RATIO_CURRENT inert: c50_h10 and c25_h05 gave identical keep_ratio
+#     histograms, 2545.6 vs 2395.6 tokens instead of a 2x separation
+#   TRACE and nap_uniform were byte-identical, 29.70 vs 30.05 Step SR
+#   TRACE kept 2546 tokens against pub_* 1636, so budgets were never matched
+#
+# The GUI-Owl arms that produce the adopted 48.91 / 43.08 OmniGUI anchors
+# (scripts/xds_jobs/w49_kv_exact.tsv) carry no GEOPACT_SESSION_KV_FORCE at all.
+# These rows copy that protocol verbatim and swap only the carrier, so the two
+# backbones are finally evaluated under one serving discipline.
+#
+# PROTOCOL, fixed and not varied per arm:
+#   UITARS_NATIVE_MULTISTEP=1  UI-TARS's own action space, with teacher-forced
+#     history rendered in the same DSL. Without it the model emits <thought> and
+#     never an action on 98% of steps.
+#   UITARS_COORD_RESCALE=1     the stage-B gate measured every emitted point
+#     inside [0,1000] under this setting.
+#   session KV LEFT ALONE      abc_r10 exports GEOPACT_SESSION_KV=1 and
+#     MODE=dialogue; the ui_tars wrapper requires the qwen2_5_vl carrier for it
+#     (ui_tars.py:1276), which UI-TARS-1.5-7B is.
+#
+# GRID. 6 selectors x 2 budgets x 2 datasets. History keep h = RATIO, current
+# frame keep c = GEOPACT_RATIO_CURRENT for the nap/TRACE family and
+# GEOPACT_PUBBASE_CURRENT for pub_* arms, matching how Tables 1-2 pair the stages.
+# TRACE env blocks are copied per budget from w49_kv_exact.tsv rw1_* rows.
+# BENCHMARK|TASK|TRACK|EXP_ARM|RATIO|HIST_N|OUT|LIMIT|EXTRA_ENV
+omnigui|task_v2_qwen3_omni_novideo|baseline_full|00_baseline|-|5|logs/w52_uitars/omnigui/dense|-|LMMS_MODEL=ui_tars,MODEL_DIR=models/UI-TARS-1.5-7B,SKIP_VERIFY=1,UITARS_NATIVE_MULTISTEP=1,UITARS_COORD_RESCALE=1
+omnigui|task_v2_qwen3_omni_novideo|abc_r10|v3_nap|0.10|5|logs/w52_uitars/omnigui/trace_c50_h10|-|LMMS_MODEL=ui_tars,MODEL_DIR=models/UI-TARS-1.5-7B,SKIP_VERIFY=1,UITARS_NATIVE_MULTISTEP=1,UITARS_COORD_RESCALE=1,GEOPACT_RATIO_CURRENT=0.50,GEOPACT_NAP_ANTICIPATE=0,GEOPACT_NAP_CONTRACT=prefix,GEOPACT_RECTIFY_PREFETCH=1,GEOPACT_CRS=1,GEOPACT_CRS_NESTED=1,GEOPACT_CRS_SKEL_FRAC=0.05,GEOPACT_KV_HISTORY_REWRITE=1
+omnigui|task_v2_qwen3_omni_novideo|abc_r10|v3_nap|0.05|5|logs/w52_uitars/omnigui/trace_c25_h05|-|LMMS_MODEL=ui_tars,MODEL_DIR=models/UI-TARS-1.5-7B,SKIP_VERIFY=1,UITARS_NATIVE_MULTISTEP=1,UITARS_COORD_RESCALE=1,GEOPACT_RATIO_CURRENT=0.25,GEOPACT_BAM_ALPHA_CAL=1,GEOPACT_NAP_ANTICIPATE=0,GEOPACT_RECTIFY_PREFETCH=1,GEOPACT_CRS=1,GEOPACT_CRS_REP=stride,GEOPACT_CRS_NESTED=1,GEOPACT_CRS_NESTED_FRAC=0.05,GEOPACT_BAM_MASS_ALPHA=2.0,GEOPACT_KV_HISTORY_REWRITE=1
+omnigui|task_v2_qwen3_omni_novideo|abc_r10|nap_uniform|0.10|5|logs/w52_uitars/omnigui/uniform_c50_h10|-|LMMS_MODEL=ui_tars,MODEL_DIR=models/UI-TARS-1.5-7B,SKIP_VERIFY=1,UITARS_NATIVE_MULTISTEP=1,UITARS_COORD_RESCALE=1,GEOPACT_RATIO_CURRENT=0.50
+omnigui|task_v2_qwen3_omni_novideo|abc_r10|nap_uniform|0.05|5|logs/w52_uitars/omnigui/uniform_c25_h05|-|LMMS_MODEL=ui_tars,MODEL_DIR=models/UI-TARS-1.5-7B,SKIP_VERIFY=1,UITARS_NATIVE_MULTISTEP=1,UITARS_COORD_RESCALE=1,GEOPACT_RATIO_CURRENT=0.25
+omnigui|task_v2_qwen3_omni_novideo|abc_r10|nap_random|0.10|5|logs/w52_uitars/omnigui/random_c50_h10|-|LMMS_MODEL=ui_tars,MODEL_DIR=models/UI-TARS-1.5-7B,SKIP_VERIFY=1,UITARS_NATIVE_MULTISTEP=1,UITARS_COORD_RESCALE=1,GEOPACT_RATIO_CURRENT=0.50
+omnigui|task_v2_qwen3_omni_novideo|abc_r10|nap_random|0.05|5|logs/w52_uitars/omnigui/random_c25_h05|-|LMMS_MODEL=ui_tars,MODEL_DIR=models/UI-TARS-1.5-7B,SKIP_VERIFY=1,UITARS_NATIVE_MULTISTEP=1,UITARS_COORD_RESCALE=1,GEOPACT_RATIO_CURRENT=0.25
+omnigui|task_v2_qwen3_omni_novideo|baseline_full|pub_divprune|0.10|5|logs/w52_uitars/omnigui/divprune_c50_h10|-|LMMS_MODEL=ui_tars,MODEL_DIR=models/UI-TARS-1.5-7B,SKIP_VERIFY=1,UITARS_NATIVE_MULTISTEP=1,UITARS_COORD_RESCALE=1,GEOPACT_PUBBASE_CURRENT=0.50
+omnigui|task_v2_qwen3_omni_novideo|baseline_full|pub_divprune|0.05|5|logs/w52_uitars/omnigui/divprune_c25_h05|-|LMMS_MODEL=ui_tars,MODEL_DIR=models/UI-TARS-1.5-7B,SKIP_VERIFY=1,UITARS_NATIVE_MULTISTEP=1,UITARS_COORD_RESCALE=1,GEOPACT_PUBBASE_CURRENT=0.25
+omnigui|task_v2_qwen3_omni_novideo|baseline_full|pub_cdpruner|0.10|5|logs/w52_uitars/omnigui/cdpruner_c50_h10|-|LMMS_MODEL=ui_tars,MODEL_DIR=models/UI-TARS-1.5-7B,SKIP_VERIFY=1,UITARS_NATIVE_MULTISTEP=1,UITARS_COORD_RESCALE=1,GEOPACT_PUBBASE_CURRENT=0.50
+omnigui|task_v2_qwen3_omni_novideo|baseline_full|pub_cdpruner|0.05|5|logs/w52_uitars/omnigui/cdpruner_c25_h05|-|LMMS_MODEL=ui_tars,MODEL_DIR=models/UI-TARS-1.5-7B,SKIP_VERIFY=1,UITARS_NATIVE_MULTISTEP=1,UITARS_COORD_RESCALE=1,GEOPACT_PUBBASE_CURRENT=0.25
+omnigui|task_v2_qwen3_omni_novideo|baseline_full|pub_prunesid|0.10|5|logs/w52_uitars/omnigui/prunesid_c50_h10|-|LMMS_MODEL=ui_tars,MODEL_DIR=models/UI-TARS-1.5-7B,SKIP_VERIFY=1,UITARS_NATIVE_MULTISTEP=1,UITARS_COORD_RESCALE=1,GEOPACT_PUBBASE_CURRENT=0.50
+omnigui|task_v2_qwen3_omni_novideo|baseline_full|pub_prunesid|0.05|5|logs/w52_uitars/omnigui/prunesid_c25_h05|-|LMMS_MODEL=ui_tars,MODEL_DIR=models/UI-TARS-1.5-7B,SKIP_VERIFY=1,UITARS_NATIVE_MULTISTEP=1,UITARS_COORD_RESCALE=1,GEOPACT_PUBBASE_CURRENT=0.25
+mind2web_task|task_mind2web_qwen3_omni_task|baseline_full|00_baseline|-|5|logs/w52_uitars/mind2web_task/dense|-|LMMS_MODEL=ui_tars,MODEL_DIR=models/UI-TARS-1.5-7B,SKIP_VERIFY=1,UITARS_NATIVE_MULTISTEP=1,UITARS_COORD_RESCALE=1
+mind2web_task|task_mind2web_qwen3_omni_task|abc_r10|v3_nap|0.10|5|logs/w52_uitars/mind2web_task/trace_c50_h10|-|LMMS_MODEL=ui_tars,MODEL_DIR=models/UI-TARS-1.5-7B,SKIP_VERIFY=1,UITARS_NATIVE_MULTISTEP=1,UITARS_COORD_RESCALE=1,GEOPACT_RATIO_CURRENT=0.50,GEOPACT_BAM_ALPHA_CAL=1,GEOPACT_NAP_ANTICIPATE=0,GEOPACT_NAP_CONTRACT=prefix,GEOPACT_RECTIFY_PREFETCH=1,GEOPACT_CRS=1,GEOPACT_CRS_REP=stride,GEOPACT_CRS_NESTED=1,GEOPACT_CRS_NESTED_FRAC=0.05,GEOPACT_BAM_MASS_ALPHA=2.0,GEOPACT_KV_HISTORY_REWRITE=1
+mind2web_task|task_mind2web_qwen3_omni_task|abc_r10|v3_nap|0.05|5|logs/w52_uitars/mind2web_task/trace_c25_h05|-|LMMS_MODEL=ui_tars,MODEL_DIR=models/UI-TARS-1.5-7B,SKIP_VERIFY=1,UITARS_NATIVE_MULTISTEP=1,UITARS_COORD_RESCALE=1,GEOPACT_RATIO_CURRENT=0.25,GEOPACT_BAM_ALPHA_CAL=1,GEOPACT_NAP_ANTICIPATE=0,GEOPACT_NAP_CONTRACT=prefix,GEOPACT_RECTIFY_PREFETCH=1,GEOPACT_CRS=1,GEOPACT_CRS_REP=stride,GEOPACT_CRS_NESTED=1,GEOPACT_CRS_NESTED_FRAC=0.05,GEOPACT_BAM_MASS_ALPHA=2.0,GEOPACT_KV_HISTORY_REWRITE=1
+mind2web_task|task_mind2web_qwen3_omni_task|abc_r10|nap_uniform|0.10|5|logs/w52_uitars/mind2web_task/uniform_c50_h10|-|LMMS_MODEL=ui_tars,MODEL_DIR=models/UI-TARS-1.5-7B,SKIP_VERIFY=1,UITARS_NATIVE_MULTISTEP=1,UITARS_COORD_RESCALE=1,GEOPACT_RATIO_CURRENT=0.50
+mind2web_task|task_mind2web_qwen3_omni_task|abc_r10|nap_uniform|0.05|5|logs/w52_uitars/mind2web_task/uniform_c25_h05|-|LMMS_MODEL=ui_tars,MODEL_DIR=models/UI-TARS-1.5-7B,SKIP_VERIFY=1,UITARS_NATIVE_MULTISTEP=1,UITARS_COORD_RESCALE=1,GEOPACT_RATIO_CURRENT=0.25
+mind2web_task|task_mind2web_qwen3_omni_task|abc_r10|nap_random|0.10|5|logs/w52_uitars/mind2web_task/random_c50_h10|-|LMMS_MODEL=ui_tars,MODEL_DIR=models/UI-TARS-1.5-7B,SKIP_VERIFY=1,UITARS_NATIVE_MULTISTEP=1,UITARS_COORD_RESCALE=1,GEOPACT_RATIO_CURRENT=0.50
+mind2web_task|task_mind2web_qwen3_omni_task|abc_r10|nap_random|0.05|5|logs/w52_uitars/mind2web_task/random_c25_h05|-|LMMS_MODEL=ui_tars,MODEL_DIR=models/UI-TARS-1.5-7B,SKIP_VERIFY=1,UITARS_NATIVE_MULTISTEP=1,UITARS_COORD_RESCALE=1,GEOPACT_RATIO_CURRENT=0.25
+mind2web_task|task_mind2web_qwen3_omni_task|baseline_full|pub_divprune|0.10|5|logs/w52_uitars/mind2web_task/divprune_c50_h10|-|LMMS_MODEL=ui_tars,MODEL_DIR=models/UI-TARS-1.5-7B,SKIP_VERIFY=1,UITARS_NATIVE_MULTISTEP=1,UITARS_COORD_RESCALE=1,GEOPACT_PUBBASE_CURRENT=0.50
+mind2web_task|task_mind2web_qwen3_omni_task|baseline_full|pub_divprune|0.05|5|logs/w52_uitars/mind2web_task/divprune_c25_h05|-|LMMS_MODEL=ui_tars,MODEL_DIR=models/UI-TARS-1.5-7B,SKIP_VERIFY=1,UITARS_NATIVE_MULTISTEP=1,UITARS_COORD_RESCALE=1,GEOPACT_PUBBASE_CURRENT=0.25
+mind2web_task|task_mind2web_qwen3_omni_task|baseline_full|pub_cdpruner|0.10|5|logs/w52_uitars/mind2web_task/cdpruner_c50_h10|-|LMMS_MODEL=ui_tars,MODEL_DIR=models/UI-TARS-1.5-7B,SKIP_VERIFY=1,UITARS_NATIVE_MULTISTEP=1,UITARS_COORD_RESCALE=1,GEOPACT_PUBBASE_CURRENT=0.50
+mind2web_task|task_mind2web_qwen3_omni_task|baseline_full|pub_cdpruner|0.05|5|logs/w52_uitars/mind2web_task/cdpruner_c25_h05|-|LMMS_MODEL=ui_tars,MODEL_DIR=models/UI-TARS-1.5-7B,SKIP_VERIFY=1,UITARS_NATIVE_MULTISTEP=1,UITARS_COORD_RESCALE=1,GEOPACT_PUBBASE_CURRENT=0.25
+mind2web_task|task_mind2web_qwen3_omni_task|baseline_full|pub_prunesid|0.10|5|logs/w52_uitars/mind2web_task/prunesid_c50_h10|-|LMMS_MODEL=ui_tars,MODEL_DIR=models/UI-TARS-1.5-7B,SKIP_VERIFY=1,UITARS_NATIVE_MULTISTEP=1,UITARS_COORD_RESCALE=1,GEOPACT_PUBBASE_CURRENT=0.50
+mind2web_task|task_mind2web_qwen3_omni_task|baseline_full|pub_prunesid|0.05|5|logs/w52_uitars/mind2web_task/prunesid_c25_h05|-|LMMS_MODEL=ui_tars,MODEL_DIR=models/UI-TARS-1.5-7B,SKIP_VERIFY=1,UITARS_NATIVE_MULTISTEP=1,UITARS_COORD_RESCALE=1,GEOPACT_PUBBASE_CURRENT=0.25

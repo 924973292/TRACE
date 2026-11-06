@@ -1,0 +1,22 @@
+# W46 detector-parity power check: alpha sweep for the hybrid (baseline + same
+# OmniParser prior) arms.
+#
+# WHY. The already-measured parity cells use GEOPACT_PUB_HYBRID_ALPHA=2.0, which
+# builds mass m_j = 1 + alpha * P_j with P max-normalised to [0,1]
+# (geopact_vl_hook.py:2383). TRACE's own BAM mass is m_j = 1 + alpha * n * p_j
+# with p a probability measure (geopact_qd_selector.py:1006), so at equal alpha
+# the baselines receive a prior whose dynamic range is ~n times weaker. That
+# makes the control under-powered. This sweep raises alpha so the
+# parity arms are reported at their OWN best setting, i.e. the reading least
+# favourable to us.
+#
+# alpha = 2 cells already exist under logs/xds8b_abl2/screenspot_v2/hyb_*.
+# BENCHMARK|TASK|TRACK|EXP_ARM|RATIO|HIST_N|OUT|LIMIT|EXTRA_ENV
+screenspot_v2|task_screenspot_v2_guiowl|baseline_full|pub_hybrid_divprune|0.10|-|logs/w46_parity/screenspot_v2/hyb_divprune_r10_a8|-|MODEL_DIR=models/GUI-Owl-1.5-8B-Instruct,GEOPACT_PUB_HYBRID_ALPHA=8.0
+screenspot_v2|task_screenspot_v2_guiowl|baseline_full|pub_hybrid_divprune|0.05|-|logs/w46_parity/screenspot_v2/hyb_divprune_r05_a8|-|MODEL_DIR=models/GUI-Owl-1.5-8B-Instruct,GEOPACT_PUB_HYBRID_ALPHA=8.0
+screenspot_v2|task_screenspot_v2_guiowl|baseline_full|pub_hybrid_divprune|0.10|-|logs/w46_parity/screenspot_v2/hyb_divprune_r10_a16|-|MODEL_DIR=models/GUI-Owl-1.5-8B-Instruct,GEOPACT_PUB_HYBRID_ALPHA=16.0
+screenspot_v2|task_screenspot_v2_guiowl|baseline_full|pub_hybrid_divprune|0.05|-|logs/w46_parity/screenspot_v2/hyb_divprune_r05_a16|-|MODEL_DIR=models/GUI-Owl-1.5-8B-Instruct,GEOPACT_PUB_HYBRID_ALPHA=16.0
+screenspot_v2|task_screenspot_v2_guiowl|baseline_full|pub_hybrid_vispruner|0.10|-|logs/w46_parity/screenspot_v2/hyb_vispruner_r10_a8|-|MODEL_DIR=models/GUI-Owl-1.5-8B-Instruct,GEOPACT_PUB_HYBRID_ALPHA=8.0
+screenspot_v2|task_screenspot_v2_guiowl|baseline_full|pub_hybrid_vispruner|0.05|-|logs/w46_parity/screenspot_v2/hyb_vispruner_r05_a8|-|MODEL_DIR=models/GUI-Owl-1.5-8B-Instruct,GEOPACT_PUB_HYBRID_ALPHA=8.0
+screenspot_v2|task_screenspot_v2_guiowl|baseline_full|pub_hybrid_vispruner|0.10|-|logs/w46_parity/screenspot_v2/hyb_vispruner_r10_a16|-|MODEL_DIR=models/GUI-Owl-1.5-8B-Instruct,GEOPACT_PUB_HYBRID_ALPHA=16.0
+screenspot_v2|task_screenspot_v2_guiowl|baseline_full|pub_hybrid_vispruner|0.05|-|logs/w46_parity/screenspot_v2/hyb_vispruner_r05_a16|-|MODEL_DIR=models/GUI-Owl-1.5-8B-Instruct,GEOPACT_PUB_HYBRID_ALPHA=16.0

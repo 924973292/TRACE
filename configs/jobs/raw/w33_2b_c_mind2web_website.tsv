@@ -1,0 +1,9 @@
+# W33 2B replication phase C (mind2web_website), pending launch
+mind2web_website|task_mind2web_qwen3_omni_website|baseline_full|pub_cdpruner|0.10|5|logs/xds2b_rep/mind2web_website/cdpruner_c50_h10|-|MODEL_DIR=models/GUI-Owl-1.5-2B-Instruct,GEOPACT_PUBBASE_CURRENT=0.50
+mind2web_website|task_mind2web_qwen3_omni_website|baseline_full|pub_prumergeplus|0.10|5|logs/xds2b_rep/mind2web_website/prumergeplus_c50_h10|-|MODEL_DIR=models/GUI-Owl-1.5-2B-Instruct,GEOPACT_PUBBASE_CURRENT=0.50
+mind2web_website|task_mind2web_qwen3_omni_website|baseline_full|pub_trim|0.10|5|logs/xds2b_rep/mind2web_website/trim_c50_h10|-|MODEL_DIR=models/GUI-Owl-1.5-2B-Instruct,GEOPACT_PUBBASE_CURRENT=0.50
+mind2web_website|task_mind2web_qwen3_omni_website|baseline_full|pub_dart|0.50|5|logs/xds2b_rep/mind2web_website/dart_c50_h10|-|MODEL_DIR=models/GUI-Owl-1.5-2B-Instruct,GEOPACT_DART_KEEP_HIST=0.10
+mind2web_website|task_mind2web_qwen3_omni_website|baseline_full|pub_cdpruner|0.05|5|logs/xds2b_rep/mind2web_website/cdpruner_c25_h05|-|MODEL_DIR=models/GUI-Owl-1.5-2B-Instruct,GEOPACT_PUBBASE_CURRENT=0.25
+mind2web_website|task_mind2web_qwen3_omni_website|baseline_full|pub_prumergeplus|0.05|5|logs/xds2b_rep/mind2web_website/prumergeplus_c25_h05|-|MODEL_DIR=models/GUI-Owl-1.5-2B-Instruct,GEOPACT_PUBBASE_CURRENT=0.25
+mind2web_website|task_mind2web_qwen3_omni_website|baseline_full|pub_trim|0.05|5|logs/xds2b_rep/mind2web_website/trim_c25_h05|-|MODEL_DIR=models/GUI-Owl-1.5-2B-Instruct,GEOPACT_PUBBASE_CURRENT=0.25
+mind2web_website|task_mind2web_qwen3_omni_website|baseline_full|pub_dart|0.25|5|logs/xds2b_rep/mind2web_website/dart_c25_h05|-|MODEL_DIR=models/GUI-Owl-1.5-2B-Instruct,GEOPACT_DART_KEEP_HIST=0.05

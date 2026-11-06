@@ -1,0 +1,69 @@
+# TRACE evaluation stack.
+#
+# Install order (Linux, CUDA 12.1 / 12.2, Python 3.10):
+#   1. conda create -n trace python=3.10 && conda activate trace
+#   2. pip install torch==2.2.2 torchvision==0.17.2 --index-url https://download.pytorch.org/whl/cu121
+#   3. pip install -r requirements.txt
+#   4. pip install -e ./lmms_eval
+#   5. bash scripts/install_flash_attn_omini_eval.sh   # flash-attn 2.5.8 wheel
+#   6. python scripts/restore_q3vl_geopact_patches.py   # GUI-Owl
+#      python scripts/restore_q25vl_geopact_patches.py  # UI-TARS
+#
+# Do not `pip install -e ./lmms_eval` before installing torch + transformers
+# 4.57: that used to pull transformers==4.39.2, which cannot load Qwen3-VL.
+# The package pin in lmms_eval/pyproject.toml is now >=4.57,<5.
+#
+# Versions that produced the paper numbers (A800, Linux x86_64):
+#   Python 3.10
+#   PyTorch 2.2.2+cu121
+#   CUDA 12.x (driver compatible with cu121 wheels)
+#   transformers >=4.57.0,<5.0
+#   flash-attn 2.5.8 (+cu122torch2.2, cp310, linux_x86_64)
+#   qwen-vl-utils >=0.0.10
+
+accelerate>=0.29.1
+datasets==2.16.1
+evaluate>=0.4.0
+httpx==0.23.3
+jsonlines
+numexpr
+numpy==1.26.4
+peft>=0.2.0
+pybind11>=2.6.2
+pytablewriter
+sacrebleu>=1.5.0
+scikit-learn>=0.24.1
+sqlitedict
+einops
+ftfy
+openai
+opencv-python-headless
+av
+hf_transfer
+huggingface_hub
+nltk
+sentencepiece==0.1.99
+pycocoevalcap
+tqdm-multiprocess
+transformers>=4.57.0,<5.0
+transformers-stream-generator
+qwen-vl-utils>=0.0.10
+zstandard
+pillow
+pyyaml
+Jinja2
+openpyxl
+loguru
+Levenshtein
+tenacity==8.3.0
+tiktoken
+pydantic
+packaging
+ultralytics
+matplotlib
+timm
+decord
+zss
+anls
+rouge
+pandas

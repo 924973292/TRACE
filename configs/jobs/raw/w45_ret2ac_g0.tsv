@@ -1,0 +1,2 @@
+# W45 retention v2: ac ours mild, LIMIT=1000, with keep dump.
+android_control|task_android_control_qwen3_omni|abc_r10|v3_nap|0.10|5|logs/w45_ret2/ac_ours_c50_h10|1000|MODEL_DIR=models/GUI-Owl-1.5-8B-Instruct,GEOPACT_RATIO_CURRENT=0.50,GEOPACT_BAM_ALPHA_CAL=1,GEOPACT_NAP_ANTICIPATE=0,GEOPACT_NAP_CONTRACT=prefix,GEOPACT_RECTIFY_PREFETCH=1,GEOPACT_CRS=1,GEOPACT_CRS_REP=stride,GEOPACT_CRS_NESTED=1,GEOPACT_CRS_NESTED_FRAC=0.10,GEOPACT_PRUNE_DIAG_DUMP=logs/w45_ret2/ac_ours_c50_h10.jsonl

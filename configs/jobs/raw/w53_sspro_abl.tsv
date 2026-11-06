@@ -1,0 +1,37 @@
+# W53-B: second benchmark for the single-step module ablations (tab:lip-energy,
+# tab:neo-form, tab:ablation-modules panel b).
+#
+# WHY. All three tables rest on ScreenSpot-v2 alone. A one-benchmark ablation
+# cannot separate "this term matters" from "this term matters on this benchmark",
+# and ScreenSpot-Pro is the harder, higher-resolution counterpart where coverage
+# and layout priors should matter more, not less. Adding it turns each table from
+# a single observation into a two-point trend, which is what makes a component
+# claim credible.
+#
+# ANCHORS (recovered by matching the published SSPro averages to their runs):
+#   r=10% -> xds8b_tune/screenspot_pro/a4fix_r10    = 37.63, alpha 4.0, rho_cov .50
+#   r=5%  -> xds8b_tune/screenspot_pro/covdose30_r05 = 20.30, alpha_cal, rho_cov .30
+# Every knockout below copies its budget's anchor verbatim and changes exactly one
+# thing, so each delta is read against a twin launched from this same queue.
+#
+# GROUPS.
+#   base/noH/noC/noG/noR      -> tab:lip-energy at both budgets (S is deliberately
+#                                not revisited: the paper no longer reports it)
+#   coef/lse/meanrow          -> tab:neo-form at r=10%, matching the SSv2 panel
+#   medoid                    -> tab:ablation-modules(b) representative choice
+#
+# BENCHMARK|TASK|TRACK|EXP_ARM|RATIO|HIST_N|OUT|LIMIT|EXTRA_ENV
+screenspot_pro|task_screenspot_pro_guiowl|abc_r10|v3_nap|0.10|-|logs/w53_sspro/screenspot_pro/base_r10|-|MODEL_DIR=models/GUI-Owl-1.5-8B-Instruct,GEOPACT_RATIO_CURRENT=0.10,GEOPACT_NAP_ANTICIPATE=0,GEOPACT_CRS=1,GEOPACT_CRS_REP=stride,GEOPACT_CRS_SKEL_FRAC=0.50,GEOPACT_BAM_MASS_ALPHA=4.0
+screenspot_pro|task_screenspot_pro_guiowl|abc_r10|v3_nap|0.10|-|logs/w53_sspro/screenspot_pro/noH_r10|-|MODEL_DIR=models/GUI-Owl-1.5-8B-Instruct,GEOPACT_RATIO_CURRENT=0.10,GEOPACT_NAP_ANTICIPATE=0,GEOPACT_CRS=1,GEOPACT_CRS_REP=stride,GEOPACT_CRS_SKEL_FRAC=0.50,GEOPACT_BAM_MASS_ALPHA=4.0,GEOPACT_POLICY_EXTRA=drop_pent_entropy
+screenspot_pro|task_screenspot_pro_guiowl|abc_r10|v3_nap|0.10|-|logs/w53_sspro/screenspot_pro/noC_r10|-|MODEL_DIR=models/GUI-Owl-1.5-8B-Instruct,GEOPACT_RATIO_CURRENT=0.10,GEOPACT_NAP_ANTICIPATE=0,GEOPACT_CRS=1,GEOPACT_CRS_REP=stride,GEOPACT_CRS_SKEL_FRAC=0.50,GEOPACT_BAM_MASS_ALPHA=4.0,GEOPACT_POLICY_EXTRA=drop_pent_contrast
+screenspot_pro|task_screenspot_pro_guiowl|abc_r10|v3_nap|0.10|-|logs/w53_sspro/screenspot_pro/noG_r10|-|MODEL_DIR=models/GUI-Owl-1.5-8B-Instruct,GEOPACT_RATIO_CURRENT=0.10,GEOPACT_NAP_ANTICIPATE=0,GEOPACT_CRS=1,GEOPACT_CRS_REP=stride,GEOPACT_CRS_SKEL_FRAC=0.50,GEOPACT_BAM_MASS_ALPHA=4.0,GEOPACT_POLICY_EXTRA=drop_pent_containment
+screenspot_pro|task_screenspot_pro_guiowl|abc_r10|v3_nap|0.10|-|logs/w53_sspro/screenspot_pro/noR_r10|-|MODEL_DIR=models/GUI-Owl-1.5-8B-Instruct,GEOPACT_RATIO_CURRENT=0.10,GEOPACT_NAP_ANTICIPATE=0,GEOPACT_CRS=1,GEOPACT_CRS_REP=stride,GEOPACT_CRS_SKEL_FRAC=0.50,GEOPACT_BAM_MASS_ALPHA=4.0,GEOPACT_POLICY_EXTRA=drop_pent_resonance
+screenspot_pro|task_screenspot_pro_guiowl|abc_r10|v3_nap|0.05|-|logs/w53_sspro/screenspot_pro/base_r5|-|MODEL_DIR=models/GUI-Owl-1.5-8B-Instruct,GEOPACT_RATIO_CURRENT=0.05,GEOPACT_BAM_ALPHA_CAL=1,GEOPACT_NAP_ANTICIPATE=0,GEOPACT_CRS=1,GEOPACT_CRS_REP=stride,GEOPACT_CRS_SKEL_FRAC=0.30
+screenspot_pro|task_screenspot_pro_guiowl|abc_r10|v3_nap|0.05|-|logs/w53_sspro/screenspot_pro/noH_r5|-|MODEL_DIR=models/GUI-Owl-1.5-8B-Instruct,GEOPACT_RATIO_CURRENT=0.05,GEOPACT_BAM_ALPHA_CAL=1,GEOPACT_NAP_ANTICIPATE=0,GEOPACT_CRS=1,GEOPACT_CRS_REP=stride,GEOPACT_CRS_SKEL_FRAC=0.30,GEOPACT_POLICY_EXTRA=drop_pent_entropy
+screenspot_pro|task_screenspot_pro_guiowl|abc_r10|v3_nap|0.05|-|logs/w53_sspro/screenspot_pro/noC_r5|-|MODEL_DIR=models/GUI-Owl-1.5-8B-Instruct,GEOPACT_RATIO_CURRENT=0.05,GEOPACT_BAM_ALPHA_CAL=1,GEOPACT_NAP_ANTICIPATE=0,GEOPACT_CRS=1,GEOPACT_CRS_REP=stride,GEOPACT_CRS_SKEL_FRAC=0.30,GEOPACT_POLICY_EXTRA=drop_pent_contrast
+screenspot_pro|task_screenspot_pro_guiowl|abc_r10|v3_nap|0.05|-|logs/w53_sspro/screenspot_pro/noG_r5|-|MODEL_DIR=models/GUI-Owl-1.5-8B-Instruct,GEOPACT_RATIO_CURRENT=0.05,GEOPACT_BAM_ALPHA_CAL=1,GEOPACT_NAP_ANTICIPATE=0,GEOPACT_CRS=1,GEOPACT_CRS_REP=stride,GEOPACT_CRS_SKEL_FRAC=0.30,GEOPACT_POLICY_EXTRA=drop_pent_containment
+screenspot_pro|task_screenspot_pro_guiowl|abc_r10|v3_nap|0.05|-|logs/w53_sspro/screenspot_pro/noR_r5|-|MODEL_DIR=models/GUI-Owl-1.5-8B-Instruct,GEOPACT_RATIO_CURRENT=0.05,GEOPACT_BAM_ALPHA_CAL=1,GEOPACT_NAP_ANTICIPATE=0,GEOPACT_CRS=1,GEOPACT_CRS_REP=stride,GEOPACT_CRS_SKEL_FRAC=0.30,GEOPACT_POLICY_EXTRA=drop_pent_resonance
+screenspot_pro|task_screenspot_pro_guiowl|abc_r10|v3_nap|0.10|-|logs/w53_sspro/screenspot_pro/neo_coef_r10|-|MODEL_DIR=models/GUI-Owl-1.5-8B-Instruct,GEOPACT_RATIO_CURRENT=0.10,GEOPACT_NAP_ANTICIPATE=0,GEOPACT_CRS=1,GEOPACT_CRS_REP=stride,GEOPACT_CRS_SKEL_FRAC=0.50,GEOPACT_BAM_MASS_ALPHA=4.0,GEOPACT_BAM_SHARP_A=1
+screenspot_pro|task_screenspot_pro_guiowl|abc_r10|v3_nap|0.10|-|logs/w53_sspro/screenspot_pro/neo_lse_r10|-|MODEL_DIR=models/GUI-Owl-1.5-8B-Instruct,GEOPACT_RATIO_CURRENT=0.10,GEOPACT_NAP_ANTICIPATE=0,GEOPACT_CRS=1,GEOPACT_CRS_REP=stride,GEOPACT_CRS_SKEL_FRAC=0.50,GEOPACT_BAM_MASS_ALPHA=4.0,GEOPACT_BAM_QUERY_LSE=1
+screenspot_pro|task_screenspot_pro_guiowl|abc_r10|v3_nap|0.10|-|logs/w53_sspro/screenspot_pro/neo_meanrow_r10|-|MODEL_DIR=models/GUI-Owl-1.5-8B-Instruct,GEOPACT_RATIO_CURRENT=0.10,GEOPACT_NAP_ANTICIPATE=0,GEOPACT_CRS=1,GEOPACT_CRS_REP=stride,GEOPACT_CRS_SKEL_FRAC=0.50,GEOPACT_BAM_MASS_ALPHA=4.0,GEOPACT_TURN_QUERY_MEANROW=1
+screenspot_pro|task_screenspot_pro_guiowl|abc_r10|v3_nap|0.10|-|logs/w53_sspro/screenspot_pro/rep_medoid_r10|-|MODEL_DIR=models/GUI-Owl-1.5-8B-Instruct,GEOPACT_RATIO_CURRENT=0.10,GEOPACT_NAP_ANTICIPATE=0,GEOPACT_CRS=1,GEOPACT_CRS_REP=medoid,GEOPACT_CRS_SKEL_FRAC=0.50,GEOPACT_BAM_MASS_ALPHA=4.0

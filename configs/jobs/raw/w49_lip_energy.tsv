@@ -1,0 +1,35 @@
+# W49 LIP energy-term necessity, Module-A-v2 lineage.
+#
+# WHY. app:method-details defines E_b = H_b + C_b + G_b + R_b over 12 lines but
+# no measurement supports any one term. The only prior drop-one sweep
+# (05a_r40_cdct_a01_drop_pent_*) predates the v2 energy: it used
+# conf x (S+H+C+G+R) at r=0.40 with CDCT tokens, so it cannot speak for the
+# current formula. Separately, every adopted arm hardcodes the policy suffix
+# drop_pent_scale (run_qwen_a100_five_arm_one.sh:_setup_module_a_v2_arm), i.e.
+# the removal of S is a live design decision that the paper states in one
+# sentence and never tests. This queue measures all five terms at once.
+#
+# HOW. Knockouts are policy tokens, not env flags. GEOPACT_POLICY_EXTRA
+# (added W49) appends a suffix to the v2 policy string; the value "none"
+# drops back to the bare v2 policy, which is the with-S control. Parsing
+# entry: miu_info_density._drop_pentagonal_component.
+#
+# ANCHORS. Both cells copy the adopted 8B ScreenSpot-v2 arms verbatim:
+#   r=10% <- w19b_p18304.tsv  logs/xds8b_tune/screenspot_v2/covdose50_r10 (73.90)
+#   r=5%  <- w23_ssv2_p12767.tsv logs/xds8b_tune/screenspot_v2/a2fix_r5   (55.19)
+# The base rows re-measure those anchors under this queue so every delta is
+# read against a twin launched from the same TSV, not against a legacy number.
+#
+# BENCHMARK|TASK|TRACK|EXP_ARM|RATIO|HIST_N|OUT|LIMIT|EXTRA_ENV
+screenspot_v2|task_screenspot_v2_guiowl|abc_r10|v3_nap|0.10|-|logs/w49_lip/screenspot_v2/base_r10|-|MODEL_DIR=models/GUI-Owl-1.5-8B-Instruct,GEOPACT_RATIO_CURRENT=0.10,GEOPACT_BAM_ALPHA_CAL=1,GEOPACT_NAP_ANTICIPATE=0,GEOPACT_CRS=1,GEOPACT_CRS_REP=stride,GEOPACT_CRS_SKEL_FRAC=0.50
+screenspot_v2|task_screenspot_v2_guiowl|abc_r10|v3_nap|0.10|-|logs/w49_lip/screenspot_v2/noH_r10|-|MODEL_DIR=models/GUI-Owl-1.5-8B-Instruct,GEOPACT_RATIO_CURRENT=0.10,GEOPACT_BAM_ALPHA_CAL=1,GEOPACT_NAP_ANTICIPATE=0,GEOPACT_CRS=1,GEOPACT_CRS_REP=stride,GEOPACT_CRS_SKEL_FRAC=0.50,GEOPACT_POLICY_EXTRA=drop_pent_entropy
+screenspot_v2|task_screenspot_v2_guiowl|abc_r10|v3_nap|0.10|-|logs/w49_lip/screenspot_v2/noC_r10|-|MODEL_DIR=models/GUI-Owl-1.5-8B-Instruct,GEOPACT_RATIO_CURRENT=0.10,GEOPACT_BAM_ALPHA_CAL=1,GEOPACT_NAP_ANTICIPATE=0,GEOPACT_CRS=1,GEOPACT_CRS_REP=stride,GEOPACT_CRS_SKEL_FRAC=0.50,GEOPACT_POLICY_EXTRA=drop_pent_contrast
+screenspot_v2|task_screenspot_v2_guiowl|abc_r10|v3_nap|0.10|-|logs/w49_lip/screenspot_v2/noG_r10|-|MODEL_DIR=models/GUI-Owl-1.5-8B-Instruct,GEOPACT_RATIO_CURRENT=0.10,GEOPACT_BAM_ALPHA_CAL=1,GEOPACT_NAP_ANTICIPATE=0,GEOPACT_CRS=1,GEOPACT_CRS_REP=stride,GEOPACT_CRS_SKEL_FRAC=0.50,GEOPACT_POLICY_EXTRA=drop_pent_containment
+screenspot_v2|task_screenspot_v2_guiowl|abc_r10|v3_nap|0.10|-|logs/w49_lip/screenspot_v2/noR_r10|-|MODEL_DIR=models/GUI-Owl-1.5-8B-Instruct,GEOPACT_RATIO_CURRENT=0.10,GEOPACT_BAM_ALPHA_CAL=1,GEOPACT_NAP_ANTICIPATE=0,GEOPACT_CRS=1,GEOPACT_CRS_REP=stride,GEOPACT_CRS_SKEL_FRAC=0.50,GEOPACT_POLICY_EXTRA=drop_pent_resonance
+screenspot_v2|task_screenspot_v2_guiowl|abc_r10|v3_nap|0.10|-|logs/w49_lip/screenspot_v2/withS_r10|-|MODEL_DIR=models/GUI-Owl-1.5-8B-Instruct,GEOPACT_RATIO_CURRENT=0.10,GEOPACT_BAM_ALPHA_CAL=1,GEOPACT_NAP_ANTICIPATE=0,GEOPACT_CRS=1,GEOPACT_CRS_REP=stride,GEOPACT_CRS_SKEL_FRAC=0.50,GEOPACT_POLICY_EXTRA=none
+screenspot_v2|task_screenspot_v2_guiowl|abc_r10|v3_nap|0.05|-|logs/w49_lip/screenspot_v2/base_r5|-|MODEL_DIR=models/GUI-Owl-1.5-8B-Instruct,GEOPACT_RATIO_CURRENT=0.05,GEOPACT_NAP_ANTICIPATE=0,GEOPACT_CRS=1,GEOPACT_CRS_REP=stride,GEOPACT_CRS_SKEL_FRAC=0.30,GEOPACT_BAM_MASS_ALPHA=2.0
+screenspot_v2|task_screenspot_v2_guiowl|abc_r10|v3_nap|0.05|-|logs/w49_lip/screenspot_v2/noH_r5|-|MODEL_DIR=models/GUI-Owl-1.5-8B-Instruct,GEOPACT_RATIO_CURRENT=0.05,GEOPACT_NAP_ANTICIPATE=0,GEOPACT_CRS=1,GEOPACT_CRS_REP=stride,GEOPACT_CRS_SKEL_FRAC=0.30,GEOPACT_BAM_MASS_ALPHA=2.0,GEOPACT_POLICY_EXTRA=drop_pent_entropy
+screenspot_v2|task_screenspot_v2_guiowl|abc_r10|v3_nap|0.05|-|logs/w49_lip/screenspot_v2/noC_r5|-|MODEL_DIR=models/GUI-Owl-1.5-8B-Instruct,GEOPACT_RATIO_CURRENT=0.05,GEOPACT_NAP_ANTICIPATE=0,GEOPACT_CRS=1,GEOPACT_CRS_REP=stride,GEOPACT_CRS_SKEL_FRAC=0.30,GEOPACT_BAM_MASS_ALPHA=2.0,GEOPACT_POLICY_EXTRA=drop_pent_contrast
+screenspot_v2|task_screenspot_v2_guiowl|abc_r10|v3_nap|0.05|-|logs/w49_lip/screenspot_v2/noG_r5|-|MODEL_DIR=models/GUI-Owl-1.5-8B-Instruct,GEOPACT_RATIO_CURRENT=0.05,GEOPACT_NAP_ANTICIPATE=0,GEOPACT_CRS=1,GEOPACT_CRS_REP=stride,GEOPACT_CRS_SKEL_FRAC=0.30,GEOPACT_BAM_MASS_ALPHA=2.0,GEOPACT_POLICY_EXTRA=drop_pent_containment
+screenspot_v2|task_screenspot_v2_guiowl|abc_r10|v3_nap|0.05|-|logs/w49_lip/screenspot_v2/noR_r5|-|MODEL_DIR=models/GUI-Owl-1.5-8B-Instruct,GEOPACT_RATIO_CURRENT=0.05,GEOPACT_NAP_ANTICIPATE=0,GEOPACT_CRS=1,GEOPACT_CRS_REP=stride,GEOPACT_CRS_SKEL_FRAC=0.30,GEOPACT_BAM_MASS_ALPHA=2.0,GEOPACT_POLICY_EXTRA=drop_pent_resonance
+screenspot_v2|task_screenspot_v2_guiowl|abc_r10|v3_nap|0.05|-|logs/w49_lip/screenspot_v2/withS_r5|-|MODEL_DIR=models/GUI-Owl-1.5-8B-Instruct,GEOPACT_RATIO_CURRENT=0.05,GEOPACT_NAP_ANTICIPATE=0,GEOPACT_CRS=1,GEOPACT_CRS_REP=stride,GEOPACT_CRS_SKEL_FRAC=0.30,GEOPACT_BAM_MASS_ALPHA=2.0,GEOPACT_POLICY_EXTRA=none

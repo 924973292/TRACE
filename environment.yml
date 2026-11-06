@@ -1,0 +1,12 @@
+name: trace
+channels:
+  - conda-forge
+dependencies:
+  - python=3.10
+  - pip
+  - pip:
+      - -r requirements.txt
+# After creating the env, install CUDA PyTorch and FlashAttention separately:
+#   pip install torch==2.2.2 torchvision==0.17.2 --index-url https://download.pytorch.org/whl/cu121
+#   bash scripts/install_flash_attn_omini_eval.sh
+#   pip install -e ./lmms_eval

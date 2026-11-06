@@ -1,0 +1,7 @@
+This repository includes a modified copy of lmms-eval
+(https://github.com/EvolvingLMMs-Lab/lmms-eval), licensed under MIT,
+originally by the LMMs-Lab Evaluation Team.
+
+TRACE method code (LIP / NEO / NCR / MKC), published-baseline adapters,
+eval job definitions, analysis scripts, and table/figure generators are
+original to this work and are released under the MIT License in LICENSE.

@@ -1,0 +1,40 @@
+#!/usr/bin/env bash
+# Pin upstream repos and eval protocol refs for cross-benchmark matrix.
+# Update only after deliberate protocol review.
+set -euo pipefail
+
+cat <<'EOF'
+# MobileAgent (GUI-Owl 1.5 AndroidWorld entry)
+MOBILEAGENT_REPO=https://github.com/X-PLUG/MobileAgent.git
+MOBILEAGENT_REF=Mobile-Agent-v3.5
+MOBILEAGENT_UTILS_COMMIT=8cf3966e
+
+# Google AndroidWorld (AVD + task checkers)
+ANDROID_WORLD_REPO=https://github.com/google-research/android_world.git
+ANDROID_WORLD_REF=main
+
+# Tongyi Mobile-World (Docker + mw eval) — removed from offline matrix
+MOBILEWORLD_REPO=https://github.com/Tongyi-MAI/MobileWorld.git
+MOBILEWORLD_REF=main
+
+# GUI-Owl 8B vLLM serve (official README)
+VLLM_MAX_MODEL_LEN=32768
+VLLM_LIMIT_MM_PER_PROMPT_IMAGE=5
+
+# Offline dataset sources (hf-mirror / HF)
+SCREENSPOT_V2_DATASET=OS-Copilot/ScreenSpot-v2
+SCREENSPOT_PRO_DATASET=likaixin/ScreenSpot-Pro
+MMBENCH_GUI_REPO=https://github.com/open-compass/MMBench-GUI.git
+MMBENCH_GUI_DATASET=OpenGVLab/MMBench-GUI
+ANDROID_CONTROL_JSON=endlesswinds/AndroidControl-JSON-Splits
+ANDROID_CONTROL_IMAGES=cckevinn/GUI-Actor-Data/AndroidControl_images.zip
+
+# Eval scorers (this repo)
+ANDROID_CONTROL_EVAL=lmms_eval/tasks/gui_owl_cross/android_control_eval.py
+MMBENCH_L1_METRIC=platform-weighted acc (alpha=1/num_options, Eq.4)
+SCREENSPOT_METRIC=center_acc (point-in-bbox)
+
+# Bootstrap + matrix entrypoints
+POST_UPLOAD_BOOTSTRAP=scripts/post_upload_bootstrap.sh
+OFFLINE_MATRIX_8B=scripts/run_cross_benchmark_offline_matrix_8b.sh
+EOF

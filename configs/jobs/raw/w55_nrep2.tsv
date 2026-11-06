@@ -1,0 +1,16 @@
+# W55: retirement-pass representative ablation for tab:ablation-modules (b),
+# anchored on the TRUE adopted anchors this time.
+#
+# The aborted W54 batch cloned logs/xds8b_full/* arms, which turned out to be a
+# superseded lineage that never enabled NCR, so CRS_NESTED_REP was inert there.
+# The real published anchors (xds8b_tune tight arms) all carry GEOPACT_CRS=1 +
+# CRS_NESTED=1 with runtime crs_nested_* keys in their run.log, so flipping
+# CRS_NESTED_REP against them measures exactly the retirement representative
+# and nothing else. The medoid side needs no run: it IS the adopted arm
+# (crs_nested_rep_mode defaults to medoid).
+#
+# BENCHMARK|TASK|TRACK|EXP_ARM|RATIO|HIST_N|OUT|LIMIT|EXTRA_ENV
+omnigui|task_v2_qwen3_omni_novideo|abc_r10|v3_nap|0.05|5|logs/w55_nrep2/omnigui/nrep_stride_c25_h05|-|MODEL_DIR=models/GUI-Owl-1.5-8B-Instruct,GEOPACT_RATIO_CURRENT=0.25,GEOPACT_BAM_ALPHA_CAL=1,GEOPACT_NAP_ANTICIPATE=0,GEOPACT_RECTIFY_PREFETCH=1,GEOPACT_CRS=1,GEOPACT_CRS_REP=stride,GEOPACT_CRS_NESTED=1,GEOPACT_CRS_NESTED_FRAC=0.05,GEOPACT_BAM_MASS_ALPHA=2.0,GEOPACT_CRS_NESTED_REP=stride
+mind2web_task|task_mind2web_qwen3_omni_task|abc_r10|v3_nap|0.05|5|logs/w55_nrep2/mind2web_task/nrep_stride_c25_h05|-|MODEL_DIR=models/GUI-Owl-1.5-8B-Instruct,GEOPACT_RATIO_CURRENT=0.25,GEOPACT_NAP_ANTICIPATE=0,GEOPACT_RECTIFY_PREFETCH=1,GEOPACT_CRS=1,GEOPACT_CRS_REP=stride,GEOPACT_CRS_NESTED=1,GEOPACT_CRS_NESTED_FRAC=0.05,GEOPACT_BAM_MASS_ALPHA=6.0,GEOPACT_CRS_NESTED_REP=stride
+mind2web_website|task_mind2web_qwen3_omni_website|abc_r10|v3_nap|0.05|5|logs/w55_nrep2/mind2web_website/nrep_stride_c25_h05|-|MODEL_DIR=models/GUI-Owl-1.5-8B-Instruct,GEOPACT_RATIO_CURRENT=0.25,GEOPACT_NAP_ANTICIPATE=0,GEOPACT_RECTIFY_PREFETCH=1,GEOPACT_CRS=1,GEOPACT_CRS_REP=stride,GEOPACT_CRS_NESTED=1,GEOPACT_CRS_NESTED_FRAC=0.05,GEOPACT_BAM_MASS_ALPHA=6.0,GEOPACT_CRS_NESTED_REP=stride
+mind2web_domain|task_mind2web_qwen3_omni_domain|abc_r10|v3_nap|0.05|5|logs/w55_nrep2/mind2web_domain/nrep_stride_c25_h05|-|MODEL_DIR=models/GUI-Owl-1.5-8B-Instruct,GEOPACT_RATIO_CURRENT=0.25,GEOPACT_NAP_ANTICIPATE=0,GEOPACT_RECTIFY_PREFETCH=1,GEOPACT_CRS=1,GEOPACT_CRS_REP=stride,GEOPACT_CRS_NESTED=1,GEOPACT_CRS_NESTED_FRAC=0.05,GEOPACT_BAM_MASS_ALPHA=6.0,GEOPACT_CRS_NESTED_REP=stride

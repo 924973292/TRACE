@@ -1,0 +1,48 @@
+# W53-A: paradigm-transfer control (tab:transfer) on the two missing Mind2Web splits.
+#
+# WHY. tab:transfer reports "Mind2Web (Step SR)" but every cell comes from
+# mind2web_task alone, whereas Mind2Web's official metric pools three cross-splits
+# by step count. The column label therefore overstates its scope. Running website
+# and domain lets the table report the pooled Mind2Web number that the rest of the
+# paper uses, so the transfer control and the main multi-step table become
+# directly comparable instead of silently measuring different things.
+#
+# WHAT. Three published selectors ported onto the deletion-only path (nap_pubsel),
+# plus their native re-prefill twins, at both budgets on both missing splits.
+# Native rows use baseline_full so they keep the published pipeline (re-encode
+# every frame, select per frame independently); ported rows use abc_r10 so the
+# same scoring rule is executed inside our nested order. That contrast is the
+# whole point of the control, so both halves must be present per split.
+#
+# ANCHORS. Every row is byte-identical to the adopted mind2web_task rows except
+# BENCHMARK/TASK/OUT:
+#   ported  <- w38h_p19167 / w38h_p18304 / w38h_p12767 (xds8b_abl/mind2web_task)
+#   native  <- w52-style pub rows with GEOPACT_PUBBASE_CURRENT at the same c
+# \method{} rows already exist for all three splits (xds8b_full), so they are not
+# re-run here.
+#
+# BENCHMARK|TASK|TRACK|EXP_ARM|RATIO|HIST_N|OUT|LIMIT|EXTRA_ENV
+mind2web_website|task_mind2web_qwen3_omni_website|abc_r10|nap_pubsel|0.10|5|logs/w53_transfer/mind2web_website/pubsel_divprune_c50_h10|-|MODEL_DIR=models/GUI-Owl-1.5-8B-Instruct,GEOPACT_RATIO_CURRENT=0.50,GEOPACT_NAP_PUBSEL_POLICY=divprune
+mind2web_website|task_mind2web_qwen3_omni_website|abc_r10|nap_pubsel|0.05|5|logs/w53_transfer/mind2web_website/pubsel_divprune_c25_h05|-|MODEL_DIR=models/GUI-Owl-1.5-8B-Instruct,GEOPACT_RATIO_CURRENT=0.25,GEOPACT_NAP_PUBSEL_POLICY=divprune
+mind2web_website|task_mind2web_qwen3_omni_website|abc_r10|nap_pubsel|0.10|5|logs/w53_transfer/mind2web_website/pubsel_vispruner_c50_h10|-|MODEL_DIR=models/GUI-Owl-1.5-8B-Instruct,GEOPACT_RATIO_CURRENT=0.50,GEOPACT_NAP_PUBSEL_POLICY=vispruner,GEOPACT_VZ_ATTN_CAPTURE=1
+mind2web_website|task_mind2web_qwen3_omni_website|abc_r10|nap_pubsel|0.05|5|logs/w53_transfer/mind2web_website/pubsel_vispruner_c25_h05|-|MODEL_DIR=models/GUI-Owl-1.5-8B-Instruct,GEOPACT_RATIO_CURRENT=0.25,GEOPACT_NAP_PUBSEL_POLICY=vispruner,GEOPACT_VZ_ATTN_CAPTURE=1
+mind2web_website|task_mind2web_qwen3_omni_website|abc_r10|nap_pubsel|0.10|5|logs/w53_transfer/mind2web_website/pubsel_zooprune_c50_h10|-|MODEL_DIR=models/GUI-Owl-1.5-8B-Instruct,GEOPACT_RATIO_CURRENT=0.50,GEOPACT_NAP_PUBSEL_POLICY=zooprune,GEOPACT_ZOO_SENS_CAPTURE=1
+mind2web_website|task_mind2web_qwen3_omni_website|abc_r10|nap_pubsel|0.05|5|logs/w53_transfer/mind2web_website/pubsel_zooprune_c25_h05|-|MODEL_DIR=models/GUI-Owl-1.5-8B-Instruct,GEOPACT_RATIO_CURRENT=0.25,GEOPACT_NAP_PUBSEL_POLICY=zooprune,GEOPACT_ZOO_SENS_CAPTURE=1
+mind2web_website|task_mind2web_qwen3_omni_website|baseline_full|pub_divprune|0.10|5|logs/w53_transfer/mind2web_website/native_divprune_c50_h10|-|MODEL_DIR=models/GUI-Owl-1.5-8B-Instruct,GEOPACT_PUBBASE_CURRENT=0.50
+mind2web_website|task_mind2web_qwen3_omni_website|baseline_full|pub_divprune|0.05|5|logs/w53_transfer/mind2web_website/native_divprune_c25_h05|-|MODEL_DIR=models/GUI-Owl-1.5-8B-Instruct,GEOPACT_PUBBASE_CURRENT=0.25
+mind2web_website|task_mind2web_qwen3_omni_website|baseline_full|pub_vispruner|0.10|5|logs/w53_transfer/mind2web_website/native_vispruner_c50_h10|-|MODEL_DIR=models/GUI-Owl-1.5-8B-Instruct,GEOPACT_PUBBASE_CURRENT=0.50
+mind2web_website|task_mind2web_qwen3_omni_website|baseline_full|pub_vispruner|0.05|5|logs/w53_transfer/mind2web_website/native_vispruner_c25_h05|-|MODEL_DIR=models/GUI-Owl-1.5-8B-Instruct,GEOPACT_PUBBASE_CURRENT=0.25
+mind2web_website|task_mind2web_qwen3_omni_website|baseline_full|pub_zooprune|0.10|5|logs/w53_transfer/mind2web_website/native_zooprune_c50_h10|-|MODEL_DIR=models/GUI-Owl-1.5-8B-Instruct,GEOPACT_PUBBASE_CURRENT=0.50
+mind2web_website|task_mind2web_qwen3_omni_website|baseline_full|pub_zooprune|0.05|5|logs/w53_transfer/mind2web_website/native_zooprune_c25_h05|-|MODEL_DIR=models/GUI-Owl-1.5-8B-Instruct,GEOPACT_PUBBASE_CURRENT=0.25
+mind2web_domain|task_mind2web_qwen3_omni_domain|abc_r10|nap_pubsel|0.10|5|logs/w53_transfer/mind2web_domain/pubsel_divprune_c50_h10|-|MODEL_DIR=models/GUI-Owl-1.5-8B-Instruct,GEOPACT_RATIO_CURRENT=0.50,GEOPACT_NAP_PUBSEL_POLICY=divprune
+mind2web_domain|task_mind2web_qwen3_omni_domain|abc_r10|nap_pubsel|0.05|5|logs/w53_transfer/mind2web_domain/pubsel_divprune_c25_h05|-|MODEL_DIR=models/GUI-Owl-1.5-8B-Instruct,GEOPACT_RATIO_CURRENT=0.25,GEOPACT_NAP_PUBSEL_POLICY=divprune
+mind2web_domain|task_mind2web_qwen3_omni_domain|abc_r10|nap_pubsel|0.10|5|logs/w53_transfer/mind2web_domain/pubsel_vispruner_c50_h10|-|MODEL_DIR=models/GUI-Owl-1.5-8B-Instruct,GEOPACT_RATIO_CURRENT=0.50,GEOPACT_NAP_PUBSEL_POLICY=vispruner,GEOPACT_VZ_ATTN_CAPTURE=1
+mind2web_domain|task_mind2web_qwen3_omni_domain|abc_r10|nap_pubsel|0.05|5|logs/w53_transfer/mind2web_domain/pubsel_vispruner_c25_h05|-|MODEL_DIR=models/GUI-Owl-1.5-8B-Instruct,GEOPACT_RATIO_CURRENT=0.25,GEOPACT_NAP_PUBSEL_POLICY=vispruner,GEOPACT_VZ_ATTN_CAPTURE=1
+mind2web_domain|task_mind2web_qwen3_omni_domain|abc_r10|nap_pubsel|0.10|5|logs/w53_transfer/mind2web_domain/pubsel_zooprune_c50_h10|-|MODEL_DIR=models/GUI-Owl-1.5-8B-Instruct,GEOPACT_RATIO_CURRENT=0.50,GEOPACT_NAP_PUBSEL_POLICY=zooprune,GEOPACT_ZOO_SENS_CAPTURE=1
+mind2web_domain|task_mind2web_qwen3_omni_domain|abc_r10|nap_pubsel|0.05|5|logs/w53_transfer/mind2web_domain/pubsel_zooprune_c25_h05|-|MODEL_DIR=models/GUI-Owl-1.5-8B-Instruct,GEOPACT_RATIO_CURRENT=0.25,GEOPACT_NAP_PUBSEL_POLICY=zooprune,GEOPACT_ZOO_SENS_CAPTURE=1
+mind2web_domain|task_mind2web_qwen3_omni_domain|baseline_full|pub_divprune|0.10|5|logs/w53_transfer/mind2web_domain/native_divprune_c50_h10|-|MODEL_DIR=models/GUI-Owl-1.5-8B-Instruct,GEOPACT_PUBBASE_CURRENT=0.50
+mind2web_domain|task_mind2web_qwen3_omni_domain|baseline_full|pub_divprune|0.05|5|logs/w53_transfer/mind2web_domain/native_divprune_c25_h05|-|MODEL_DIR=models/GUI-Owl-1.5-8B-Instruct,GEOPACT_PUBBASE_CURRENT=0.25
+mind2web_domain|task_mind2web_qwen3_omni_domain|baseline_full|pub_vispruner|0.10|5|logs/w53_transfer/mind2web_domain/native_vispruner_c50_h10|-|MODEL_DIR=models/GUI-Owl-1.5-8B-Instruct,GEOPACT_PUBBASE_CURRENT=0.50
+mind2web_domain|task_mind2web_qwen3_omni_domain|baseline_full|pub_vispruner|0.05|5|logs/w53_transfer/mind2web_domain/native_vispruner_c25_h05|-|MODEL_DIR=models/GUI-Owl-1.5-8B-Instruct,GEOPACT_PUBBASE_CURRENT=0.25
+mind2web_domain|task_mind2web_qwen3_omni_domain|baseline_full|pub_zooprune|0.10|5|logs/w53_transfer/mind2web_domain/native_zooprune_c50_h10|-|MODEL_DIR=models/GUI-Owl-1.5-8B-Instruct,GEOPACT_PUBBASE_CURRENT=0.50
+mind2web_domain|task_mind2web_qwen3_omni_domain|baseline_full|pub_zooprune|0.05|5|logs/w53_transfer/mind2web_domain/native_zooprune_c25_h05|-|MODEL_DIR=models/GUI-Owl-1.5-8B-Instruct,GEOPACT_PUBBASE_CURRENT=0.25

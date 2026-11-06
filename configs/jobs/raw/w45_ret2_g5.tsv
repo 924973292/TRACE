@@ -1,0 +1,2 @@
+# W45 retention v2: omni divprune tight, LIMIT=1000, with keep dump.
+omnigui|task_v2_qwen3_omni_novideo|abc_r10|nap_pubsel|0.05|5|logs/w45_ret2/omni_divprune_c25_h05|1000|MODEL_DIR=models/GUI-Owl-1.5-8B-Instruct,GEOPACT_RATIO_CURRENT=0.25,GEOPACT_NAP_PUBSEL_POLICY=divprune,GEOPACT_PRUNE_DIAG_DUMP=logs/w45_ret2/omni_divprune_c25_h05.jsonl

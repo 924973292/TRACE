@@ -1,0 +1,57 @@
+task: task_android_control_qwen3_omni
+dataset_path: json
+dataset_kwargs:
+  data_files: "data/android_control/merged_sorted.json"
+test_split: train
+output_type: generate_until
+doc_to_visual: !function process_results.android_control_doc_to_visual
+doc_to_text: ""
+doc_to_messages: !function process_results.android_control_dialogue_doc_to_messages
+doc_to_target: !function process_results.android_control_doc_to_target
+process_results: !function process_results.android_control_omni_process_result
+generation_kwargs:
+  max_new_tokens: 4096
+  temperature: 0
+  do_sample: false
+metric_list:
+  - metric: type_match
+    aggregation: !function utils_eval_extensions.omni_aggregate_type_match
+    higher_is_better: true
+  - metric: exact_match
+    aggregation: !function utils_eval_extensions.omni_aggregate_exact_match
+    higher_is_better: true
+  - metric: success_rate
+    aggregation: !function utils_eval_extensions.omni_aggregate_success_rate
+    higher_is_better: true
+  - metric: goal_progress
+    aggregation: !function utils_eval_extensions.omni_aggregate_goal_progress
+    higher_is_better: true
+  - metric: e2e_latency_ms
+    aggregation: !function utils_eval_extensions.omni_aggregate_e2e_latency_ms
+    higher_is_better: false
+  - metric: vision_prefill_ms
+    aggregation: !function utils_eval_extensions.omni_aggregate_vision_prefill_ms
+    higher_is_better: false
+  - metric: pruning_ms
+    aggregation: !function utils_eval_extensions.omni_aggregate_pruning_ms
+    higher_is_better: false
+  - metric: llm_prefill_ms
+    aggregation: !function utils_eval_extensions.omni_aggregate_llm_prefill_ms
+    higher_is_better: false
+  - metric: decode_latency_ms
+    aggregation: !function utils_eval_extensions.omni_aggregate_decode_latency_ms
+    higher_is_better: false
+  - metric: misc_ms
+    aggregation: !function utils_eval_extensions.omni_aggregate_misc_ms
+    higher_is_better: false
+lmms_eval_specific_kwargs:
+  media_dir: "data/android_control"
+  eval_android_control: true
+  qwen_include_history: true
+  max_history_turns: 6
+  supports_session_kv: true
+metadata:
+  version: 1
+  protocol: android_control_qwen3_omni_v1
+  model_baseline: GUI-Owl-1.5-8B-Instruct
+  supports_session_kv: true

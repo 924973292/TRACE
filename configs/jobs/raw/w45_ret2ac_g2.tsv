@@ -1,0 +1,2 @@
+# W45 retention v2: ac uniform mild, LIMIT=1000, with keep dump.
+android_control|task_android_control_qwen3_omni|abc_r10|nap_uniform|0.10|5|logs/w45_ret2/ac_uniform_c50_h10|1000|MODEL_DIR=models/GUI-Owl-1.5-8B-Instruct,GEOPACT_RATIO_CURRENT=0.50,GEOPACT_PRUNE_DIAG_DUMP=logs/w45_ret2/ac_uniform_c50_h10.jsonl

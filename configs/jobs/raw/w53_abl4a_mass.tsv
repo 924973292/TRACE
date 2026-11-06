@@ -1,0 +1,17 @@
+# W53-D: the mass-removal row of tab:ablation-modules(a) on the two missing
+# Mind2Web splits.
+#
+# WHY. Panel (a) has three rows and W53-C only extended two of them (diversity
+# and instruction). Leaving the mass row on mind2web_task alone would make one
+# column of the same panel pooled over three splits and another over one, which
+# is worse than either choice applied consistently. This completes the panel so
+# all three deltas share one denominator.
+#
+# ANCHOR. Cloned verbatim from logs/xds8b_abl2/mind2web_task/noA_c25_h05, the
+# arm the published -mass delta is measured on. GEOPACT_BAM_NO_MASS=1 flattens
+# the layout prior's mass m_j; note it carries no BAM_MASS_ALPHA, matching the
+# task-split arm exactly.
+#
+# BENCHMARK|TASK|TRACK|EXP_ARM|RATIO|HIST_N|OUT|LIMIT|EXTRA_ENV
+mind2web_website|task_mind2web_qwen3_omni_website|abc_r10|v3_nap|0.05|5|logs/w53_abl4a/mind2web_website/noA_c25_h05|-|MODEL_DIR=models/GUI-Owl-1.5-8B-Instruct,GEOPACT_RATIO_CURRENT=0.25,GEOPACT_NAP_ANTICIPATE=0,GEOPACT_RECTIFY_PREFETCH=1,GEOPACT_BAM_NO_MASS=1,GEOPACT_CRS=1,GEOPACT_CRS_REP=stride,GEOPACT_CRS_NESTED=1,GEOPACT_CRS_NESTED_FRAC=0.05
+mind2web_domain|task_mind2web_qwen3_omni_domain|abc_r10|v3_nap|0.05|5|logs/w53_abl4a/mind2web_domain/noA_c25_h05|-|MODEL_DIR=models/GUI-Owl-1.5-8B-Instruct,GEOPACT_RATIO_CURRENT=0.25,GEOPACT_NAP_ANTICIPATE=0,GEOPACT_RECTIFY_PREFETCH=1,GEOPACT_BAM_NO_MASS=1,GEOPACT_CRS=1,GEOPACT_CRS_REP=stride,GEOPACT_CRS_NESTED=1,GEOPACT_CRS_NESTED_FRAC=0.05

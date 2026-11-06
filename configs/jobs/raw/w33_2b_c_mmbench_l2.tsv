@@ -1,0 +1,13 @@
+# W33 2B replication phase C (mmbench_l2), pending launch
+mmbench_l2|task_mmbench_gui_l2_guiowl|baseline_full|pub_cdpruner|0.25|-|logs/xds2b_rep/mmbench_l2/cdpruner_r25|-|MODEL_DIR=models/GUI-Owl-1.5-2B-Instruct
+mmbench_l2|task_mmbench_gui_l2_guiowl|baseline_full|pub_prumergeplus|0.25|-|logs/xds2b_rep/mmbench_l2/prumergeplus_r25|-|MODEL_DIR=models/GUI-Owl-1.5-2B-Instruct
+mmbench_l2|task_mmbench_gui_l2_guiowl|baseline_full|pub_trim|0.25|-|logs/xds2b_rep/mmbench_l2/trim_r25|-|MODEL_DIR=models/GUI-Owl-1.5-2B-Instruct
+mmbench_l2|task_mmbench_gui_l2_guiowl|baseline_full|pub_dart|0.25|-|logs/xds2b_rep/mmbench_l2/dart_r25|-|MODEL_DIR=models/GUI-Owl-1.5-2B-Instruct
+mmbench_l2|task_mmbench_gui_l2_guiowl|baseline_full|pub_cdpruner|0.10|-|logs/xds2b_rep/mmbench_l2/cdpruner_r10|-|MODEL_DIR=models/GUI-Owl-1.5-2B-Instruct
+mmbench_l2|task_mmbench_gui_l2_guiowl|baseline_full|pub_prumergeplus|0.10|-|logs/xds2b_rep/mmbench_l2/prumergeplus_r10|-|MODEL_DIR=models/GUI-Owl-1.5-2B-Instruct
+mmbench_l2|task_mmbench_gui_l2_guiowl|baseline_full|pub_trim|0.10|-|logs/xds2b_rep/mmbench_l2/trim_r10|-|MODEL_DIR=models/GUI-Owl-1.5-2B-Instruct
+mmbench_l2|task_mmbench_gui_l2_guiowl|baseline_full|pub_dart|0.10|-|logs/xds2b_rep/mmbench_l2/dart_r10|-|MODEL_DIR=models/GUI-Owl-1.5-2B-Instruct
+mmbench_l2|task_mmbench_gui_l2_guiowl|baseline_full|pub_cdpruner|0.05|-|logs/xds2b_rep/mmbench_l2/cdpruner_r05|-|MODEL_DIR=models/GUI-Owl-1.5-2B-Instruct
+mmbench_l2|task_mmbench_gui_l2_guiowl|baseline_full|pub_prumergeplus|0.05|-|logs/xds2b_rep/mmbench_l2/prumergeplus_r05|-|MODEL_DIR=models/GUI-Owl-1.5-2B-Instruct
+mmbench_l2|task_mmbench_gui_l2_guiowl|baseline_full|pub_trim|0.05|-|logs/xds2b_rep/mmbench_l2/trim_r05|-|MODEL_DIR=models/GUI-Owl-1.5-2B-Instruct
+mmbench_l2|task_mmbench_gui_l2_guiowl|baseline_full|pub_dart|0.05|-|logs/xds2b_rep/mmbench_l2/dart_r05|-|MODEL_DIR=models/GUI-Owl-1.5-2B-Instruct

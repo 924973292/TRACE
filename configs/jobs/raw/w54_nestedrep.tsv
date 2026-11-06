@@ -1,0 +1,29 @@
+# W54: representative choice at the NESTING level (tab:ablation-modules panel b).
+#
+# WHY. Panel (b) currently compares stride against medoid on single-step
+# grounding only, which exercises GEOPACT_CRS_REP, the current-frame pass of
+# Eq. (stride). The retirement pass of Eq. (medoid) is governed by a separate
+# flag, GEOPACT_CRS_NESTED_REP, and single-step evaluation has no retiring frame,
+# so the published panel says nothing about it. That is a real gap, because the
+# adopted architecture deliberately uses different geometry at the two levels
+# (stride for the current frame, medoid at nesting) and the table as written
+# invites the opposite reading.
+#
+# The claim in geopact_crs.py that stride loses 1.05 points at the nesting level
+# has no run behind it: no job TSV has ever set CRS_NESTED_REP, and the
+# similarly-named logs/xds8b_abl/omnigui/nested_stride05_c50_h10 arm sets
+# CRS_REP with SKEL_FRAC=0.05, so it is a single-step-flag probe at a different
+# dose and cannot serve as the nesting control. These rows measure it properly.
+#
+# ANCHORS. Cloned verbatim from the adopted main-table arms, changing only
+# CRS_NESTED_REP, so each delta reads against the number the paper already
+# reports (OmniGUI GP 27.35 mild / 20.02 tight):
+#   mild  <- logs/xds8b_full/{ds}/main_c50_h10
+#   tight <- logs/xds8b_full/{ds}/main_c25_h05
+# The medoid side needs no new run: it IS the adopted arm.
+#
+# BENCHMARK|TASK|TRACK|EXP_ARM|RATIO|HIST_N|OUT|LIMIT|EXTRA_ENV
+omnigui|task_v2_qwen3_omni_novideo|abc_r10|v3_nap|0.10|5|logs/w54_nrep/omnigui/nrep_stride_c50_h10|-|MODEL_DIR=models/GUI-Owl-1.5-8B-Instruct,GEOPACT_RATIO_CURRENT=0.50,GEOPACT_BAM_NO_MASS=1,GEOPACT_NAP_ANTICIPATE=0,GEOPACT_NAP_CONTRACT=prefix,GEOPACT_RECTIFY_PREFETCH=1,GEOPACT_CRS_NESTED_REP=stride
+omnigui|task_v2_qwen3_omni_novideo|abc_r10|v3_nap|0.05|5|logs/w54_nrep/omnigui/nrep_stride_c25_h05|-|MODEL_DIR=models/GUI-Owl-1.5-8B-Instruct,GEOPACT_RATIO_CURRENT=0.25,GEOPACT_NAP_ANTICIPATE=0,GEOPACT_RECTIFY_PREFETCH=1,GEOPACT_CRS_NESTED_REP=stride
+mind2web_task|task_mind2web_qwen3_omni_task|abc_r10|v3_nap|0.10|5|logs/w54_nrep/mind2web_task/nrep_stride_c50_h10|-|MODEL_DIR=models/GUI-Owl-1.5-8B-Instruct,GEOPACT_RATIO_CURRENT=0.50,GEOPACT_BAM_NO_MASS=1,GEOPACT_NAP_ANTICIPATE=0,GEOPACT_NAP_CONTRACT=prefix,GEOPACT_RECTIFY_PREFETCH=1,GEOPACT_CRS_NESTED_REP=stride
+mind2web_task|task_mind2web_qwen3_omni_task|abc_r10|v3_nap|0.05|5|logs/w54_nrep/mind2web_task/nrep_stride_c25_h05|-|MODEL_DIR=models/GUI-Owl-1.5-8B-Instruct,GEOPACT_RATIO_CURRENT=0.25,GEOPACT_NAP_ANTICIPATE=0,GEOPACT_RECTIFY_PREFETCH=1,GEOPACT_CRS_NESTED_REP=stride

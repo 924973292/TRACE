@@ -1,0 +1,31 @@
+task: task_mmbench_gui_l1_guiowl
+dataset_path: json
+dataset_kwargs:
+  data_files: "data/mmbench_gui/l1_eval_index.json"
+test_split: train
+output_type: generate_until
+doc_to_visual: !function utils.mmbench_gui_l1_doc_to_visual
+doc_to_text: ""
+doc_to_messages: !function utils.mmbench_gui_l1_doc_to_messages
+doc_to_target: !function utils.mmbench_gui_l1_doc_to_target
+process_results: !function utils.mmbench_gui_l1_process_result
+generation_kwargs:
+  max_new_tokens: 512
+  temperature: 0
+  do_sample: false
+metric_list:
+  - metric: mmbench_gui_l1_acc
+    aggregation: !function utils.mmbench_gui_l1_aggregate_acc_weighted
+    higher_is_better: true
+  - metric: mmbench_gui_l1_acc_macro_platform
+    aggregation: !function utils.mmbench_gui_l1_aggregate_acc_by_platform
+    higher_is_better: true
+lmms_eval_specific_kwargs:
+  media_dir: "data/mmbench_gui/offline_images"
+  mmbench_gui_eval: true
+  supports_session_kv: false
+metadata:
+  version: 1
+  protocol: mmbench_gui_l1_qa_v1
+  source: OpenGVLab/MMBench-GUI
+  model_baseline: GUI-Owl-1.5-8B-Instruct

@@ -1,0 +1,278 @@
+task: task_v2_minicpm_o_vmc_p7_av_img_image_miu_flat_r50_current_image_with_av_media_valid
+dataset_path: json
+dataset_kwargs:
+  data_files: "data/merged_sorted_media_valid.json"
+test_split: train
+output_type: generate_until
+doc_to_visual: !function utils.omni_doc_to_visual
+doc_to_text: ""
+doc_to_messages: !function utils.unified_v2_doc_to_messages
+doc_to_target: !function utils.omni_doc_to_target
+process_results: !function utils.omni_process_results
+generation_kwargs:
+  max_new_tokens: 4096
+  temperature: 0
+  do_sample: false
+  token_prune_ratio: 0.50
+  token_prune_scope: current_image
+  token_prune_policy: image_miu_flat
+metric_list:
+  - metric: type_match
+    aggregation: !function utils.agentcpm_aggregate_type_match
+    higher_is_better: true
+  - metric: exact_match
+    aggregation: !function utils.agentcpm_aggregate_exact_match
+    higher_is_better: true
+  - metric: success_rate
+    aggregation: !function utils.agentcpm_aggregate_success_rate
+    higher_is_better: true
+  - metric: goal_progress
+    aggregation: !function utils.agentcpm_aggregate_goal_progress
+    higher_is_better: true
+  - metric: input_tokens
+    aggregation: !function utils.omni_aggregate_input_tokens
+    higher_is_better: false
+  - metric: original_input_tokens
+    aggregation: !function utils.omni_aggregate_original_input_tokens
+    higher_is_better: false
+  - metric: pruned_input_tokens
+    aggregation: !function utils.omni_aggregate_pruned_input_tokens
+    higher_is_better: false
+  - metric: output_tokens
+    aggregation: !function utils.omni_aggregate_output_tokens
+    higher_is_better: false
+  - metric: total_tokens
+    aggregation: !function utils.omni_aggregate_total_tokens
+    higher_is_better: false
+  - metric: token_prune_target_ratio
+    aggregation: !function utils.omni_aggregate_token_prune_target_ratio
+    higher_is_better: false
+  - metric: actual_retention_ratio
+    aggregation: !function utils.omni_aggregate_actual_retention_ratio
+    higher_is_better: false
+  - metric: actual_media_retention_ratio
+    aggregation: !function utils.omni_aggregate_actual_media_retention_ratio
+    higher_is_better: false
+  - metric: media_tokens_before
+    aggregation: !function utils.omni_aggregate_media_tokens_before
+    higher_is_better: false
+  - metric: media_tokens_after
+    aggregation: !function utils.omni_aggregate_media_tokens_after
+    higher_is_better: false
+  - metric: media_tokens_pruned
+    aggregation: !function utils.omni_aggregate_media_tokens_pruned
+    higher_is_better: false
+  - metric: current_image_tokens_before
+    aggregation: !function utils.omni_aggregate_current_image_tokens_before
+    higher_is_better: false
+  - metric: current_image_tokens_after
+    aggregation: !function utils.omni_aggregate_current_image_tokens_after
+    higher_is_better: false
+  - metric: video_tokens_before
+    aggregation: !function utils.omni_aggregate_video_tokens_before
+    higher_is_better: false
+  - metric: video_tokens_after
+    aggregation: !function utils.omni_aggregate_video_tokens_after
+    higher_is_better: false
+  - metric: audio_tokens_before
+    aggregation: !function utils.omni_aggregate_audio_tokens_before
+    higher_is_better: false
+  - metric: audio_tokens_after
+    aggregation: !function utils.omni_aggregate_audio_tokens_after
+    higher_is_better: false
+  - metric: history_image_tokens_before
+    aggregation: !function utils.omni_aggregate_history_image_tokens_before
+    higher_is_better: false
+  - metric: history_image_tokens_after
+    aggregation: !function utils.omni_aggregate_history_image_tokens_after
+    higher_is_better: false
+  - metric: media_group_coverage
+    aggregation: !function utils.omni_aggregate_media_group_coverage
+    higher_is_better: true
+  - metric: retained_span_entropy
+    aggregation: !function utils.omni_aggregate_retained_span_entropy
+    higher_is_better: true
+  - metric: anchor_recall
+    aggregation: !function utils.omni_aggregate_anchor_recall
+    higher_is_better: true
+  - metric: boundary_integrity
+    aggregation: !function utils.omni_aggregate_boundary_integrity
+    higher_is_better: true
+  - metric: event_continuity
+    aggregation: !function utils.omni_aggregate_event_continuity
+    higher_is_better: true
+  - metric: sync_coverage
+    aggregation: !function utils.omni_aggregate_sync_coverage
+    higher_is_better: true
+  - metric: topology_fidelity
+    aggregation: !function utils.omni_aggregate_topology_fidelity
+    higher_is_better: true
+  - metric: rope_anchor_recall
+    aggregation: !function utils.omni_aggregate_rope_anchor_recall
+    higher_is_better: true
+  - metric: pospad_gap_coverage
+    aggregation: !function utils.omni_aggregate_pospad_gap_coverage
+    higher_is_better: true
+  - metric: coord_continuity_score
+    aggregation: !function utils.omni_aggregate_coord_continuity_score
+    higher_is_better: true
+  - metric: false_adjacency_proxy
+    aggregation: !function utils.omni_aggregate_false_adjacency_proxy
+    higher_is_better: false
+  - metric: scale_frame_proxy
+    aggregation: !function utils.omni_aggregate_scale_frame_proxy
+    higher_is_better: true
+  - metric: patch_order_distortion
+    aggregation: !function utils.omni_aggregate_patch_order_distortion
+    higher_is_better: false
+  - metric: ac_miu_coverage
+    aggregation: !function utils.omni_aggregate_ac_miu_coverage
+    higher_is_better: true
+  - metric: role_diversity_proxy
+    aggregation: !function utils.omni_aggregate_role_diversity_proxy
+    higher_is_better: true
+  - metric: alias_context_recall
+    aggregation: !function utils.omni_aggregate_alias_context_recall
+    higher_is_better: true
+  - metric: action_margin_proxy
+    aggregation: !function utils.omni_aggregate_action_margin_proxy
+    higher_is_better: true
+  - metric: ib_lattice_coverage
+    aggregation: !function utils.omni_aggregate_ib_lattice_coverage
+    higher_is_better: true
+  - metric: history_margin_coverage
+    aggregation: !function utils.omni_aggregate_history_margin_coverage
+    higher_is_better: true
+  - metric: modality_trigger_rate
+    aggregation: !function utils.omni_aggregate_modality_trigger_rate
+    higher_is_better: true
+  - metric: ui_graph_components
+    aggregation: !function utils.omni_aggregate_ui_graph_components
+    higher_is_better: false
+  - metric: ui_graph_component_coverage
+    aggregation: !function utils.omni_aggregate_ui_graph_component_coverage
+    higher_is_better: true
+  - metric: video_miu_events
+    aggregation: !function utils.omni_aggregate_video_miu_events
+    higher_is_better: false
+  - metric: video_miu_event_coverage
+    aggregation: !function utils.omni_aggregate_video_miu_event_coverage
+    higher_is_better: true
+  - metric: audio_miu_events
+    aggregation: !function utils.omni_aggregate_audio_miu_events
+    higher_is_better: false
+  - metric: audio_miu_event_coverage
+    aggregation: !function utils.omni_aggregate_audio_miu_event_coverage
+    higher_is_better: true
+  - metric: screenshot_miu_count
+    aggregation: !function utils.omni_aggregate_screenshot_miu_count
+    higher_is_better: false
+  - metric: video_miu_count
+    aggregation: !function utils.omni_aggregate_video_miu_count
+    higher_is_better: false
+  - metric: audio_miu_count
+    aggregation: !function utils.omni_aggregate_audio_miu_count
+    higher_is_better: false
+  - metric: miu_count
+    aggregation: !function utils.omni_aggregate_miu_count
+    higher_is_better: false
+  - metric: miu_relation_count
+    aggregation: !function utils.omni_aggregate_miu_relation_count
+    higher_is_better: false
+  - metric: miu_relation_coverage
+    aggregation: !function utils.omni_aggregate_miu_relation_coverage
+    higher_is_better: true
+  - metric: miu_role_coverage
+    aggregation: !function utils.omni_aggregate_miu_role_coverage
+    higher_is_better: true
+  - metric: selected_miu_count
+    aggregation: !function utils.omni_aggregate_selected_miu_count
+    higher_is_better: false
+  - metric: selected_screenshot_miu_count
+    aggregation: !function utils.omni_aggregate_selected_screenshot_miu_count
+    higher_is_better: false
+  - metric: selected_video_miu_count
+    aggregation: !function utils.omni_aggregate_selected_video_miu_count
+    higher_is_better: false
+  - metric: selected_audio_miu_count
+    aggregation: !function utils.omni_aggregate_selected_audio_miu_count
+    higher_is_better: false
+  - metric: miu_instruction_alignment
+    aggregation: !function utils.omni_aggregate_miu_instruction_alignment
+    higher_is_better: true
+  - metric: miu_topology_risk
+    aggregation: !function utils.omni_aggregate_miu_topology_risk
+    higher_is_better: true
+  - metric: miu_position_stability_score
+    aggregation: !function utils.omni_aggregate_miu_position_stability_score
+    higher_is_better: true
+  - metric: position_merged_tokens
+    aggregation: !function utils.omni_aggregate_position_merged_tokens
+    higher_is_better: false
+  - metric: position_merge_clusters
+    aggregation: !function utils.omni_aggregate_position_merge_clusters
+    higher_is_better: false
+  - metric: e2e_latency_ms
+    aggregation: !function utils.omni_aggregate_e2e_latency_ms
+    higher_is_better: false
+  - metric: request_latency_ms
+    aggregation: !function utils.omni_aggregate_request_latency_ms
+    higher_is_better: false
+  - metric: preprocess_ms
+    aggregation: !function utils.omni_aggregate_preprocess_ms
+    higher_is_better: false
+  - metric: queue_ms
+    aggregation: !function utils.omni_aggregate_queue_ms
+    higher_is_better: false
+  - metric: prefill_ms
+    aggregation: !function utils.omni_aggregate_prefill_ms
+    higher_is_better: false
+  - metric: generation_ms
+    aggregation: !function utils.omni_aggregate_generation_ms
+    higher_is_better: false
+  - metric: decode_total_ms
+    aggregation: !function utils.omni_aggregate_decode_total_ms
+    higher_is_better: false
+  - metric: decode_per_token_ms
+    aggregation: !function utils.omni_aggregate_decode_per_token_ms
+    higher_is_better: false
+  - metric: throughput_tokens_per_s
+    aggregation: !function utils.omni_aggregate_throughput_tokens_per_s
+    higher_is_better: true
+  - metric: token_flops_tflops
+    aggregation: !function utils.omni_aggregate_token_flops_tflops
+    higher_is_better: false
+  - metric: total_flops_tflops
+    aggregation: !function utils.omni_aggregate_total_flops_tflops
+    higher_is_better: false
+  - metric: kv_cache_gb
+    aggregation: !function utils.omni_aggregate_kv_cache_gb
+    higher_is_better: false
+  - metric: gpu_memory_gb
+    aggregation: !function utils.omni_aggregate_gpu_memory_gb
+    higher_is_better: false
+  - metric: gpu_memory_allocated_gb
+    aggregation: !function utils.omni_aggregate_gpu_memory_allocated_gb
+    higher_is_better: false
+  - metric: gpu_memory_reserved_gb
+    aggregation: !function utils.omni_aggregate_gpu_memory_reserved_gb
+    higher_is_better: false
+  - metric: forward_calls
+    aggregation: !function utils.omni_aggregate_forward_calls
+    higher_is_better: false
+  - metric: decode_forward_calls
+    aggregation: !function utils.omni_aggregate_decode_forward_calls
+    higher_is_better: false
+lmms_eval_specific_kwargs:
+  media_dir: "data/benchmark"
+  coordinate_type: "normalized"
+metadata:
+  version: 3
+  matrix: visual_miu_campaign
+  campaign_tier: p7_av_img
+  campaign_phase: 2
+  retention_tier: r50
+  av_mode: with_av
+  token_prune_scope: current_image
+  policy: image_miu_flat
+  policy_description: "AV witness + screenshot prune image_miu_flat @ 50% (AV kept)"

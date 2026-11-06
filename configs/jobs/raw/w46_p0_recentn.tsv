@@ -1,0 +1,9 @@
+# BENCHMARK|TASK|TRACK|EXP_ARM|RATIO|HIST_N|OUT|LIMIT|EXTRA_ENV
+omnigui|task_v2_qwen3_omni_novideo|baseline_full|00_baseline|-|1|logs/w46_p0/omnigui/recent1_dense|-|MODEL_DIR=models/GUI-Owl-1.5-8B-Instruct
+omnigui|task_v2_qwen3_omni_novideo|baseline_full|00_baseline|-|3|logs/w46_p0/omnigui/recent3_dense|-|MODEL_DIR=models/GUI-Owl-1.5-8B-Instruct
+omnigui|task_v2_qwen3_omni_novideo|baseline_kv|01_dialogue_kv_noprune|-|1|logs/w46_p0/omnigui/recent1_kv|-|MODEL_DIR=models/GUI-Owl-1.5-8B-Instruct
+omnigui|task_v2_qwen3_omni_novideo|baseline_kv|01_dialogue_kv_noprune|-|3|logs/w46_p0/omnigui/recent3_kv|-|MODEL_DIR=models/GUI-Owl-1.5-8B-Instruct
+android_control|task_android_control_qwen3_omni|baseline_full|00_baseline|-|1|logs/w46_p0/android_control/recent1_dense|-|MODEL_DIR=models/GUI-Owl-1.5-8B-Instruct
+android_control|task_android_control_qwen3_omni|baseline_full|00_baseline|-|3|logs/w46_p0/android_control/recent3_dense|-|MODEL_DIR=models/GUI-Owl-1.5-8B-Instruct
+android_control|task_android_control_qwen3_omni|baseline_kv|01_dialogue_kv_noprune|-|1|logs/w46_p0/android_control/recent1_kv|-|MODEL_DIR=models/GUI-Owl-1.5-8B-Instruct
+android_control|task_android_control_qwen3_omni|baseline_kv|01_dialogue_kv_noprune|-|3|logs/w46_p0/android_control/recent3_kv|-|MODEL_DIR=models/GUI-Owl-1.5-8B-Instruct

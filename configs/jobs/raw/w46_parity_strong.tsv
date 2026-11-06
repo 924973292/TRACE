@@ -1,0 +1,35 @@
+# W46 detector-parity, EXTENDED to the strongest published baselines.
+#
+# WHY. The existing parity control (logs/xds8b_abl2 + w46_parity alpha sweep)
+# only grafts the OmniParser prior onto DivPrune and VisPruner, whose unpruned
+# ScreenSpot-v2 scores at rho=10% are 51.97 / 51.73. PruneSID reaches 58.96 and
+# CDPruner is the other instruction-conditioned selector, so a control that
+# skips exactly the two strongest arms reads as cherry-picked: "you only helped
+# the baselines that could not catch you anyway". This TSV closes that hole.
+#
+# HOW the prior enters each selector's OWN score channel (no new mechanism, and
+# never a second stage bolted on top):
+#   cdpruner  -- DPP relevance r~ <- r~ * m, renormalised to max 1 so the
+#                relevance/diversity balance keeps its published scale.
+#   prunesid  -- PCA loading magnitudes <- loading * m, so a detected token wins
+#                intra-group NMS ties and quota slots; grouping, adaptive
+#                threshold and quota arithmetic untouched.
+# Unit-tested in scripts/_w46_test_hybrid_ext.py: constant mass (= what an empty
+# detection yields) reproduces the published keep set bit-exactly, peaked mass
+# pulls the keep set toward the detected block, budget is conserved, and a
+# non-hybrid selector fails loud.
+#
+# Two prior strengths per cell for the same reason as w46_parity_alpha.tsv: the
+# baseline mass is m = 1 + alpha*P with P in [0,1], while TRACE's BAM mass is
+# m = 1 + alpha*n*p with p a probability measure, so equal alpha under-powers the
+# baseline by ~n. Reporting each parity arm at its own best alpha is the reading
+# least favourable to us.
+# BENCHMARK|TASK|TRACK|EXP_ARM|RATIO|HIST_N|OUT|LIMIT|EXTRA_ENV
+screenspot_v2|task_screenspot_v2_guiowl|baseline_full|pub_hybrid_prunesid|0.10|-|logs/w46_parity/screenspot_v2/hyb_prunesid_r10_a2|-|MODEL_DIR=models/GUI-Owl-1.5-8B-Instruct,GEOPACT_PUB_HYBRID_ALPHA=2.0
+screenspot_v2|task_screenspot_v2_guiowl|baseline_full|pub_hybrid_prunesid|0.05|-|logs/w46_parity/screenspot_v2/hyb_prunesid_r05_a2|-|MODEL_DIR=models/GUI-Owl-1.5-8B-Instruct,GEOPACT_PUB_HYBRID_ALPHA=2.0
+screenspot_v2|task_screenspot_v2_guiowl|baseline_full|pub_hybrid_prunesid|0.10|-|logs/w46_parity/screenspot_v2/hyb_prunesid_r10_a8|-|MODEL_DIR=models/GUI-Owl-1.5-8B-Instruct,GEOPACT_PUB_HYBRID_ALPHA=8.0
+screenspot_v2|task_screenspot_v2_guiowl|baseline_full|pub_hybrid_prunesid|0.05|-|logs/w46_parity/screenspot_v2/hyb_prunesid_r05_a8|-|MODEL_DIR=models/GUI-Owl-1.5-8B-Instruct,GEOPACT_PUB_HYBRID_ALPHA=8.0
+screenspot_v2|task_screenspot_v2_guiowl|baseline_full|pub_hybrid_cdpruner|0.10|-|logs/w46_parity/screenspot_v2/hyb_cdpruner_r10_a2|-|MODEL_DIR=models/GUI-Owl-1.5-8B-Instruct,GEOPACT_PUB_HYBRID_ALPHA=2.0
+screenspot_v2|task_screenspot_v2_guiowl|baseline_full|pub_hybrid_cdpruner|0.05|-|logs/w46_parity/screenspot_v2/hyb_cdpruner_r05_a2|-|MODEL_DIR=models/GUI-Owl-1.5-8B-Instruct,GEOPACT_PUB_HYBRID_ALPHA=2.0
+screenspot_v2|task_screenspot_v2_guiowl|baseline_full|pub_hybrid_cdpruner|0.10|-|logs/w46_parity/screenspot_v2/hyb_cdpruner_r10_a8|-|MODEL_DIR=models/GUI-Owl-1.5-8B-Instruct,GEOPACT_PUB_HYBRID_ALPHA=8.0
+screenspot_v2|task_screenspot_v2_guiowl|baseline_full|pub_hybrid_cdpruner|0.05|-|logs/w46_parity/screenspot_v2/hyb_cdpruner_r05_a8|-|MODEL_DIR=models/GUI-Owl-1.5-8B-Instruct,GEOPACT_PUB_HYBRID_ALPHA=8.0

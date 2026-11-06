@@ -1,0 +1,12 @@
+group: gui_owl_cross
+task:
+  - task_guiowl_omnigui_native_mt4_8b
+  - task_screenspot_pro_guiowl
+  - task_screenspot_v2_guiowl
+  - task_mmbench_gui_l1_guiowl
+  - task_mmbench_gui_l2_guiowl
+  - task_android_control_high_guiowl
+  - task_android_control_qwen3_omni
+  - task_mind2web_qwen3_omni_task
+  - task_mind2web_qwen3_omni_website
+  - task_mind2web_qwen3_omni_domain

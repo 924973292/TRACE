@@ -1,0 +1,55 @@
+# W60: self-conditioned (student-forcing) closed-loop evaluation on OmniGUI.
+#
+# WHAT THIS MEASURES, AND WHAT IT DOES NOT
+#   Every multi-step number in the paper so far is teacher-forced: at step t the
+#   prompt carries the GROUND-TRUTH actions of steps 0..t-1. That isolates the
+#   per-step decision but cannot see error accumulation, which is the one risk a
+#   write-once pruned KV history could plausibly introduce: an early mistake is
+#   frozen into the cache, and the pruned cache may lack the evidence the dense
+#   cache still has for correcting it.
+#
+#   GEOPACT_SELFCOND=1 closes the loop in ACTION space: the model's own parsed
+#   predictions become the history and the KV commit turn. Screenshots stay
+#   ground truth, because no GUI dataset ships the counterfactual frame that
+#   would have followed a divergent action. So this is a self-conditioned replay
+#   along a ground-truth visual trajectory, and frames go off-policy after the
+#   first divergence.
+#
+#   That artifact is why the headline quantity is the PAIRED difference
+#   dense - TRACE, not either absolute number: both arms inherit the identical
+#   stale-frame confound, so it cancels in the difference.
+#
+# PROTOCOL, fixed across arms (vary only the selector and the budget):
+#   MODEL_DIR=models/GUI-Owl-1.5-8B-Instruct   same backbone as the main tables
+#   HIST_N=5                                    same history window as Table 2
+#   LIMIT=-                                     FULL set, all 708 episodes.
+#     Do NOT set LIMIT here: LIMIT truncates by STEP (islice), which cuts
+#     episodes mid-trajectory and would silently drop the tail steps that carry
+#     the accumulated error this experiment exists to measure.
+#   GEOPACT_SELFCOND_STRICT=1 (default)         abort rather than warn if the
+#     assistant tail stops carrying the stored prediction, which would turn the
+#     run back into teacher forcing with no other visible symptom.
+#
+# ARMS. dense = baseline_full/00_baseline (no pruning). TRACE = abc_r10/v3_nap
+# with the main-table selector settings, copied verbatim from
+# logs/w57b_unified/omnigui so the self-conditioned and teacher-forced numbers
+# are comparable arm-for-arm.
+#
+# BENCHMARK|TASK|TRACK|EXP_ARM|RATIO|HIST_N|OUT|LIMIT|EXTRA_ENV
+
+# --- Tier ii: self-conditioned free run, dense vs TRACE at both budgets -------
+omnigui|task_v2_qwen3_omni_novideo|baseline_full|00_baseline|-|5|logs/w60_selfcond/omnigui/sc_dense|-|MODEL_DIR=models/GUI-Owl-1.5-8B-Instruct,GEOPACT_SELFCOND=1,GEOPACT_SELFCOND_DUMP=logs/w60_selfcond/omnigui/sc_dense/selfcond.jsonl
+omnigui|task_v2_qwen3_omni_novideo|abc_r10|v3_nap|0.10|5|logs/w60_selfcond/omnigui/sc_trace_c50_h10|-|MODEL_DIR=models/GUI-Owl-1.5-8B-Instruct,GEOPACT_RATIO_CURRENT=0.50,GEOPACT_BAM_ALPHA_CAL=1,GEOPACT_NAP_ANTICIPATE=0,GEOPACT_RECTIFY_PREFETCH=1,GEOPACT_CRS=1,GEOPACT_CRS_REP=stride,GEOPACT_CRS_NESTED=1,GEOPACT_CRS_NESTED_FRAC=0.05,GEOPACT_SELFCOND=1,GEOPACT_SELFCOND_DUMP=logs/w60_selfcond/omnigui/sc_trace_c50_h10/selfcond.jsonl
+omnigui|task_v2_qwen3_omni_novideo|abc_r10|v3_nap|0.05|5|logs/w60_selfcond/omnigui/sc_trace_c25_h05|-|MODEL_DIR=models/GUI-Owl-1.5-8B-Instruct,GEOPACT_RATIO_CURRENT=0.25,GEOPACT_BAM_ALPHA_CAL=1,GEOPACT_NAP_ANTICIPATE=0,GEOPACT_RECTIFY_PREFETCH=1,GEOPACT_CRS=1,GEOPACT_CRS_REP=stride,GEOPACT_CRS_NESTED=1,GEOPACT_CRS_NESTED_FRAC=0.05,GEOPACT_BAM_MASS_ALPHA=2.0,GEOPACT_SELFCOND=1,GEOPACT_SELFCOND_DUMP=logs/w60_selfcond/omnigui/sc_trace_c25_h05/selfcond.jsonl
+# Only three Tier-ii arms, not four: the dense arm does no pruning, so it has no
+# budget and one dense run is the shared reference for both TRACE budgets.
+
+# --- Tier iii: history contamination, {dense, TRACE} x {clean, injected} ------
+# The clean half of the 2x2 is the Tier-ii runs above, so only the two injected
+# arms are launched here. GEOPACT_SELFCOND_INJECT forces one wrong action into
+# the history at a chosen step of every eligible episode; the metric is whether
+# the NEXT step recovers. This is an intervention, not an observation, so it
+# answers directly whether pruning removed the evidence needed to recover -- and
+# it does not depend on the model happening to make mistakes on its own.
+omnigui|task_v2_qwen3_omni_novideo|baseline_full|00_baseline|-|5|logs/w60_selfcond/omnigui/inj_dense|-|MODEL_DIR=models/GUI-Owl-1.5-8B-Instruct,GEOPACT_SELFCOND=1,GEOPACT_SELFCOND_INJECT=logs/w60_selfcond/inject.jsonl,GEOPACT_SELFCOND_DUMP=logs/w60_selfcond/omnigui/inj_dense/selfcond.jsonl
+omnigui|task_v2_qwen3_omni_novideo|abc_r10|v3_nap|0.10|5|logs/w60_selfcond/omnigui/inj_trace_c50_h10|-|MODEL_DIR=models/GUI-Owl-1.5-8B-Instruct,GEOPACT_RATIO_CURRENT=0.50,GEOPACT_BAM_ALPHA_CAL=1,GEOPACT_NAP_ANTICIPATE=0,GEOPACT_RECTIFY_PREFETCH=1,GEOPACT_CRS=1,GEOPACT_CRS_REP=stride,GEOPACT_CRS_NESTED=1,GEOPACT_CRS_NESTED_FRAC=0.05,GEOPACT_SELFCOND=1,GEOPACT_SELFCOND_INJECT=logs/w60_selfcond/inject.jsonl,GEOPACT_SELFCOND_DUMP=logs/w60_selfcond/omnigui/inj_trace_c50_h10/selfcond.jsonl

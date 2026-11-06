@@ -1,0 +1,7 @@
+# W57b final unified anchors: dense + ours strictly serial on GPU 7 (worker
+# YOLO pinned to 7), concurrent only with the anatomy queue on GPU 6.
+# Ported twins and published baselines keep their w57_lat2/w57_lat2f numbers
+# (their serving path is untouched by round 2).
+# BENCHMARK|TASK|TRACK|EXP_ARM|RATIO|HIST_N|OUT|LIMIT|EXTRA_ENV
+omnigui|task_v2_qwen3_omni_novideo|baseline_full|00_baseline|-|5|logs/w57b_unified/omnigui/baseline_full|200|MODEL_DIR=models/GUI-Owl-1.5-8B-Instruct,GEOPACT_TIMING_CUDA_SYNC=1,GEOPACT_MEM_AUDIT=1
+omnigui|task_v2_qwen3_omni_novideo|abc_r10|v3_nap|0.10|5|logs/w57b_unified/omnigui/ours_c50_h10|200|MODEL_DIR=models/GUI-Owl-1.5-8B-Instruct,GEOPACT_RATIO_CURRENT=0.50,GEOPACT_BAM_ALPHA_CAL=1,GEOPACT_NAP_ANTICIPATE=0,GEOPACT_RECTIFY_PREFETCH=1,GEOPACT_CRS=1,GEOPACT_CRS_REP=stride,GEOPACT_CRS_NESTED=1,GEOPACT_CRS_NESTED_FRAC=0.05,GEOPACT_MODULE_A_WORKER_YOLO_DEVICE=7,GEOPACT_TIMING_CUDA_SYNC=1,GEOPACT_MEM_AUDIT=1

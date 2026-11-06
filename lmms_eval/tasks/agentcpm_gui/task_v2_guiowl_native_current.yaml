@@ -1,0 +1,86 @@
+task: task_v2_guiowl_native_current
+dataset_path: json
+dataset_kwargs:
+  data_files: "data/merged_sorted.json"
+test_split: train
+output_type: generate_until
+doc_to_visual: !function utils.omni_doc_to_visual
+doc_to_text: ""
+doc_to_messages: !function utils.gui_owl_native_current_doc_to_messages
+doc_to_target: !function utils.omni_doc_to_target
+process_results: !function utils.omni_process_results
+generation_kwargs:
+  max_new_tokens: 4096
+  temperature: 0
+  do_sample: false
+metric_list:
+  - metric: type_match
+    aggregation: !function utils.agentcpm_aggregate_type_match
+    higher_is_better: true
+  - metric: exact_match
+    aggregation: !function utils.agentcpm_aggregate_exact_match
+    higher_is_better: true
+  - metric: success_rate
+    aggregation: !function utils.agentcpm_aggregate_success_rate
+    higher_is_better: true
+  - metric: goal_progress
+    aggregation: !function utils.agentcpm_aggregate_goal_progress
+    higher_is_better: true
+  - metric: e2e_latency_ms
+    aggregation: !function utils.omni_aggregate_e2e_latency_ms
+    higher_is_better: false
+  - metric: ttft_ms
+    aggregation: !function utils.omni_aggregate_ttft_ms
+    higher_is_better: false
+  - metric: preprocess_ms
+    aggregation: !function utils.omni_aggregate_preprocess_ms
+    higher_is_better: false
+  - metric: prefill_ms
+    aggregation: !function utils.omni_aggregate_prefill_ms
+    higher_is_better: false
+  - metric: vlm_prefill_ms
+    aggregation: !function utils.omni_aggregate_vlm_prefill_ms
+    higher_is_better: false
+  - metric: llm_prefill_forward_ms
+    aggregation: !function utils.omni_aggregate_llm_prefill_forward_ms
+    higher_is_better: false
+  - metric: generation_ms
+    aggregation: !function utils.omni_aggregate_generation_ms
+    higher_is_better: false
+  - metric: decode_total_ms
+    aggregation: !function utils.omni_aggregate_decode_total_ms
+    higher_is_better: false
+  - metric: decode_per_token_ms
+    aggregation: !function utils.omni_aggregate_decode_per_token_ms
+    higher_is_better: false
+  - metric: throughput_tokens_per_s
+    aggregation: !function utils.omni_aggregate_throughput_tokens_per_s
+    higher_is_better: true
+  - metric: output_tokens
+    aggregation: !function utils.omni_aggregate_output_tokens
+    higher_is_better: false
+  - metric: input_tokens
+    aggregation: !function utils.omni_aggregate_input_tokens
+    higher_is_better: false
+  - metric: episode_sum_e2e_latency_ms
+    aggregation: !function utils.omni_aggregate_episode_sum_e2e_latency_ms
+    higher_is_better: false
+  - metric: episode_mean_step_e2e_latency_ms
+    aggregation: !function utils.omni_aggregate_episode_mean_step_e2e_latency_ms
+    higher_is_better: false
+  - metric: episode_sum_generation_ms
+    aggregation: !function utils.omni_aggregate_episode_sum_generation_ms
+    higher_is_better: false
+  - metric: episode_sum_input_tokens
+    aggregation: !function utils.omni_aggregate_episode_sum_input_tokens
+    higher_is_better: false
+  - metric: episode_max_gpu_memory_gb
+    aggregation: !function utils.omni_aggregate_episode_max_gpu_memory_gb
+    higher_is_better: false
+lmms_eval_specific_kwargs:
+  media_dir: "data/benchmark"
+  coordinate_type: "normalized"
+  max_history_turns: 0
+metadata:
+  version: 1
+  protocol: guiowl_native_mt4_v1_current

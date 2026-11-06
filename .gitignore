@@ -1,8 +1,39 @@
 .DS_Store
-.vscode/
-.idea/
 
-# Local paper source is not published in this repository
+# Eval dumps (regenerate locally)
+logs/**
+!logs/.gitkeep
+
+# Downloaded assets (keep the layout READMEs)
+data/**
+!data/README.md
+models/**
+!models/README.md
+.cache/
+
+# Local env
+.venv/
+.env
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+.pytest_cache/
+
+# Generated paper assets (optional local rebuilds)
+artifacts/metrics/harvested_main.json
+artifacts/tables/*.tex
+artifacts/figures/*.pdf
+artifacts/figures/*.png
+!artifacts/tables/.gitkeep
+!artifacts/figures/.gitkeep
+
+# Editor
+.idea/
+.vscode/
+*.swp
+
+# Paper source is not published in this repository
 *.tex
 *.sty
 *.bst

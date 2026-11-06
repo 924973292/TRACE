@@ -18,7 +18,7 @@ Yunzhi Zhuge<sup>1</sup> ·
 [![arXiv](https://img.shields.io/badge/arXiv-2609.10297-b31b1b.svg)](https://arxiv.org/abs/2609.10297)
 [![PDF](https://img.shields.io/badge/PDF-arXiv-2b6cb0.svg)](https://arxiv.org/pdf/2609.10297)
 [![HTML](https://img.shields.io/badge/Paper-HTML-blue.svg)](https://arxiv.org/html/2609.10297v1)
-[![License](https://img.shields.io/badge/License-CC%20BY%204.0-lightgrey.svg)](LICENSE)
+[![License](https://img.shields.io/badge/License-MIT-lightgrey.svg)](LICENSE)
 
 A training-free visual token admission framework for efficient GUI agents under a reusable visual-state lifecycle.
 
@@ -30,11 +30,12 @@ GUI agents accumulate high-resolution screenshots as the trajectory unfolds, inc
 
 To address these challenges, we propose **TRACE**, a training-free framework for Trajectory-robust Admission and Coverage-aware Evidence ordering. Specifically, we combine a query-independent layout-derived interaction prior with instruction relevance and feature novelty to rank visual evidence according to both potential future utility and diversity. Then, we reserve part of the budget for native visual tokens distributed across the screen, repairing missing spatial coverage without breaking the ordering. Together, these mechanisms produce a nested token order, allowing retained visual evidence to shrink monotonically across budgets while remaining reusable throughout the trajectory. Finally, our monotone KV contraction incrementally contracts retired frames into compact session state, avoiding repeated visual encoding or pruning.
 
-Extensive experiments across six GUI benchmarks and diverse models verify the effectiveness of TRACE under tight budgets. The source code will be released.
+Extensive experiments across six GUI benchmarks and diverse models verify the effectiveness of TRACE under tight budgets. The source code is available in this repository.
 
 ## News
 
 - **2026.09**: Paper released on [arXiv](https://arxiv.org/abs/2609.10297) ([HTML](https://arxiv.org/html/2609.10297v1), [PDF](https://arxiv.org/pdf/2609.10297)).
+- **2026.11**: Source code released in this repository.
 
 ## Table of Contents
 
@@ -304,7 +305,101 @@ Removing any one scoring factor inside NEO degrades accuracy on all four benchma
 
 ## Code
 
-**Coming soon.** The source code will be released in this repository.
+Method code, the eval harness, published job definitions, and table/figure generators are in this repository. The paper source is not. Code still uses the historical **GeoPACT** names and `GEOPACT_*` environment variables. Dictionary: [docs/CODEMAP.md](docs/CODEMAP.md).
+
+Generating LaTeX from frozen numbers replays the published snapshot. Re-running the job files on a GPU is a separate step. Commands for each table are in [docs/reproduction.md](docs/reproduction.md).
+
+### Environment
+
+Versions that produced the reported numbers (Linux x86_64, NVIDIA A800 80GB class):
+
+| Component | Version |
+|-----------|---------|
+| Python | 3.10 |
+| PyTorch | 2.2.2+cu121 |
+| CUDA | 12.x (cu121/cu122 wheels) |
+| transformers | >=4.57.0,<5.0 (Qwen3-VL) |
+| flash-attn | 2.5.8 (`+cu122torch2.2`, cp310, linux_x86_64) |
+| qwen-vl-utils | >=0.0.10 |
+
+vLLM is not used. A CPU machine can import the harness and rebuild the published table snapshot. It cannot rerun the GPU eval.
+
+### Installation
+
+```bash
+conda create -n trace python=3.10 -y
+conda activate trace
+bash scripts/setup_eval_env.sh
+```
+
+Or step by step:
+
+```bash
+pip install torch==2.2.2 torchvision==0.17.2 --index-url https://download.pytorch.org/whl/cu121
+pip install -r requirements.txt
+pip install -e ./lmms_eval
+bash scripts/install_flash_attn_omini_eval.sh
+export EVAL_PYTHON="$(which python)"
+python scripts/restore_q3vl_geopact_patches.py          # GUI-Owl
+python scripts/restore_q25vl_geopact_patches.py         # UI-TARS
+```
+
+Install torch before `pip install -e ./lmms_eval`.
+
+### Data and models
+
+Dataset layout: [docs/datasets.md](docs/datasets.md). After the files are on disk:
+
+```bash
+python scripts/build_screenspot_v2_full_manifest.py
+python scripts/build_screenspot_pro_manifest.py
+python scripts/build_mmbench_gui_manifest.py
+python scripts/build_android_control_manifest.py
+python scripts/build_mind2web_merged.py
+python scripts/verify_cross_benchmark_data.py --strict --repo-root .
+```
+
+Do not commit checkpoints.
+
+```bash
+python scripts/download_omini_models.py --models-dir models trace
+```
+
+Place UI-TARS under `models/UI-TARS-1.5-7B` if you download it yourself. LIP requires OmniParser v2 `icon_detect/model.pt`. A missing weight file fails instead of silently loading `yolov8n.pt`.
+
+```bash
+export OMNIPARSER_ICON_WEIGHTS=/path/to/icon_detect/model.pt
+export MIU_YOLO_WEIGHTS="$OMNIPARSER_ICON_WEIGHTS"
+```
+
+### Quick start
+
+```bash
+bash scripts/demo.sh          # CPU: import, invariants, table snapshot
+bash scripts/demo.sh --gpu    # optional LIMIT=8 ScreenSpot-v2
+```
+
+A passing CPU demo means the harness imports, TRACE modules load, and the published table files regenerate. It does not mean the GPU numbers were reproduced.
+
+### Reproducing results
+
+Adopted 8B cells: [configs/experiments/adopted_8b.json](configs/experiments/adopted_8b.json). Queue format: `BENCHMARK|TASK|TRACK|EXP_ARM|RATIO|HIST_N|OUT|LIMIT|EXTRA_ENV`.
+
+```bash
+source scripts/eval_env_defaults.sh
+XDS_GPU=0 bash scripts/_xds_gpu_queue.sh configs/jobs/main_8b.tsv
+```
+
+Trust job `EXTRA_ENV`, not the Python defaults. See [docs/CODEMAP.md](docs/CODEMAP.md).
+
+Rebuild tables and figures from the frozen numbers, without a GPU:
+
+```bash
+python scripts/gen_tables.py
+python scripts/render_figs.py
+```
+
+Outputs go to `artifacts/tables/` and `artifacts/figures/`. This path replays reported numbers. It does not re-execute TRACE.
 
 ## Citation
 
@@ -333,4 +428,6 @@ This work is a collaboration of Dalian University of Technology, OPPO Research I
 
 ## License
 
-This project is released under [CC BY 4.0](LICENSE).
+Source code in this repository, including the TRACE method and the bundled [lmms-eval](https://github.com/EvolvingLMMs-Lab/lmms-eval) harness, is released under the [MIT License](LICENSE). See [NOTICE](NOTICE).
+
+The project-page text and the figures in `assets/` remain available under [CC BY 4.0](LICENSE-CC-BY-4.0).

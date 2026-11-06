@@ -1,0 +1,24 @@
+# W49 deletion-approximation cost, 8B OmniGUI.
+#
+# WHY. app:method-details concedes in prose that rows cached AFTER a deleted row
+# were produced by a causal pass whose prefix still contained the deleted visual
+# tokens, so contraction is an approximate state transition, and then states that
+# the byte-exact no-op gate is not evidence about the approximation itself. That
+# leaves the concession unquantified. GEOPACT_KV_HISTORY_REWRITE=0 falls back to full re-prefill for the
+# history prune target (geopact_session_kv._kv_history_rewrite_enabled), i.e. it
+# removes the approximation while keeping the same keep set, so the accuracy
+# difference isolates exactly the deletion error.
+#
+# READING. The rewrite=0 arm is slower by construction; its TTFT is not a
+# competitive number and must not be quoted as one. Only the accuracy delta is
+# meaningful.
+#
+# ANCHORS. Both budgets copy the adopted 8B OmniGUI arms verbatim:
+#   mild  (c50/h10) <- w36q_omni_ours.tsv config, adopted as nested_rho05_c50_h10
+#   tight (c25/h05) <- w22_omni25_g1.tsv logs/xds8b_tune/omnigui/a2cap_c25_h05
+#
+# BENCHMARK|TASK|TRACK|EXP_ARM|RATIO|HIST_N|OUT|LIMIT|EXTRA_ENV
+omnigui|task_v2_qwen3_omni_novideo|abc_r10|v3_nap|0.10|5|logs/w49_kv/omnigui/rw1_c50_h10|-|MODEL_DIR=models/GUI-Owl-1.5-8B-Instruct,GEOPACT_RATIO_CURRENT=0.50,GEOPACT_NAP_ANTICIPATE=0,GEOPACT_NAP_CONTRACT=prefix,GEOPACT_RECTIFY_PREFETCH=1,GEOPACT_CRS=1,GEOPACT_CRS_NESTED=1,GEOPACT_CRS_SKEL_FRAC=0.05,GEOPACT_KV_HISTORY_REWRITE=1
+omnigui|task_v2_qwen3_omni_novideo|abc_r10|v3_nap|0.10|5|logs/w49_kv/omnigui/rw0_c50_h10|-|MODEL_DIR=models/GUI-Owl-1.5-8B-Instruct,GEOPACT_RATIO_CURRENT=0.50,GEOPACT_NAP_ANTICIPATE=0,GEOPACT_NAP_CONTRACT=prefix,GEOPACT_RECTIFY_PREFETCH=1,GEOPACT_CRS=1,GEOPACT_CRS_NESTED=1,GEOPACT_CRS_SKEL_FRAC=0.05,GEOPACT_KV_HISTORY_REWRITE=0
+omnigui|task_v2_qwen3_omni_novideo|abc_r10|v3_nap|0.05|5|logs/w49_kv/omnigui/rw1_c25_h05|-|MODEL_DIR=models/GUI-Owl-1.5-8B-Instruct,GEOPACT_RATIO_CURRENT=0.25,GEOPACT_BAM_ALPHA_CAL=1,GEOPACT_NAP_ANTICIPATE=0,GEOPACT_RECTIFY_PREFETCH=1,GEOPACT_CRS=1,GEOPACT_CRS_REP=stride,GEOPACT_CRS_NESTED=1,GEOPACT_CRS_NESTED_FRAC=0.05,GEOPACT_BAM_MASS_ALPHA=2.0,GEOPACT_KV_HISTORY_REWRITE=1
+omnigui|task_v2_qwen3_omni_novideo|abc_r10|v3_nap|0.05|5|logs/w49_kv/omnigui/rw0_c25_h05|-|MODEL_DIR=models/GUI-Owl-1.5-8B-Instruct,GEOPACT_RATIO_CURRENT=0.25,GEOPACT_BAM_ALPHA_CAL=1,GEOPACT_NAP_ANTICIPATE=0,GEOPACT_RECTIFY_PREFETCH=1,GEOPACT_CRS=1,GEOPACT_CRS_REP=stride,GEOPACT_CRS_NESTED=1,GEOPACT_CRS_NESTED_FRAC=0.05,GEOPACT_BAM_MASS_ALPHA=2.0,GEOPACT_KV_HISTORY_REWRITE=0

@@ -1,0 +1,14 @@
+# W53-B fix: the SSPro counterpart of tab:neo-form's "mean row only" row.
+#
+# The first attempt set GEOPACT_TURN_QUERY_MEANROW=1, which is inert on its own:
+# _turn_query_meanrow_enabled is only consulted when TURN_QUERY_TOKENS=1, so the
+# arm reproduced the base keep sets byte-for-byte (identical keep_local_hash) and
+# scored an implausible delta of exactly +0.00.
+#
+# The SSv2 row this must mirror is the `meanonly` arm of w49_neo_form.tsv, which
+# drops the instruction-token rows and keeps the pure mean-pooled query via
+# TURN_QUERY_TOKENS=0 and MEANROW=0. Copying that pair here makes the two
+# benchmarks measure the same substitution.
+#
+# BENCHMARK|TASK|TRACK|EXP_ARM|RATIO|HIST_N|OUT|LIMIT|EXTRA_ENV
+screenspot_pro|task_screenspot_pro_guiowl|abc_r10|v3_nap|0.10|-|logs/w53_sspro/screenspot_pro/neo_meanonly_r10|-|MODEL_DIR=models/GUI-Owl-1.5-8B-Instruct,GEOPACT_RATIO_CURRENT=0.10,GEOPACT_NAP_ANTICIPATE=0,GEOPACT_CRS=1,GEOPACT_CRS_REP=stride,GEOPACT_CRS_SKEL_FRAC=0.50,GEOPACT_BAM_MASS_ALPHA=4.0,GEOPACT_TURN_QUERY_TOKENS=0,GEOPACT_TURN_QUERY_MEANROW=0

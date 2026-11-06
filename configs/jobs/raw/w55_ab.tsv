@@ -1,0 +1,19 @@
+# W55: behavioral A/B for the single-step NCR current-frame pass.
+#
+# WHY. Every main-table TRACE anchor passes GEOPACT_CRS=1, but no single-step
+# run.log anywhere contains the pass's audit keys (crs_g etc.), so logs cannot
+# distinguish "audit not printed" from "pass bypassed on the v3_nap path". If
+# the pass is bypassed, the single-step main numbers are behaviorally LIP+NEO
+# and the rho_cov dose claims (56.45 -> 73.90) rest on a stale lineage.
+#
+# DESIGN. Clone the two single-step anchors verbatim and toggle ONLY
+# GEOPACT_CRS. LIMIT=400 for speed. Read accuracy plus the per-sample
+# keep_local_hash stream: identical hashes across the pair = pass bypassed,
+# diverging hashes = pass live (and the accuracy gap should point toward the
+# published dose-curve gap of ~17 points on SSv2).
+#
+# BENCHMARK|TASK|TRACK|EXP_ARM|RATIO|HIST_N|OUT|LIMIT|EXTRA_ENV
+screenspot_v2|task_screenspot_v2_guiowl|abc_r10|v3_nap|0.10|-|logs/w55_ab/screenspot_v2/crs_on_r10|400|MODEL_DIR=models/GUI-Owl-1.5-8B-Instruct,GEOPACT_RATIO_CURRENT=0.10,GEOPACT_BAM_ALPHA_CAL=1,GEOPACT_NAP_ANTICIPATE=0,GEOPACT_CRS=1,GEOPACT_CRS_REP=stride,GEOPACT_CRS_SKEL_FRAC=0.50
+screenspot_v2|task_screenspot_v2_guiowl|abc_r10|v3_nap|0.10|-|logs/w55_ab/screenspot_v2/crs_off_r10|400|MODEL_DIR=models/GUI-Owl-1.5-8B-Instruct,GEOPACT_RATIO_CURRENT=0.10,GEOPACT_BAM_ALPHA_CAL=1,GEOPACT_NAP_ANTICIPATE=0,GEOPACT_CRS=0,GEOPACT_CRS_REP=stride,GEOPACT_CRS_SKEL_FRAC=0.50
+screenspot_pro|task_screenspot_pro_guiowl|abc_r10|v3_nap|0.10|-|logs/w55_ab/screenspot_pro/crs_on_r10|400|MODEL_DIR=models/GUI-Owl-1.5-8B-Instruct,GEOPACT_RATIO_CURRENT=0.10,GEOPACT_NAP_ANTICIPATE=0,GEOPACT_CRS=1,GEOPACT_CRS_REP=stride,GEOPACT_CRS_SKEL_FRAC=0.50,GEOPACT_BAM_MASS_ALPHA=4.0
+screenspot_pro|task_screenspot_pro_guiowl|abc_r10|v3_nap|0.10|-|logs/w55_ab/screenspot_pro/crs_off_r10|400|MODEL_DIR=models/GUI-Owl-1.5-8B-Instruct,GEOPACT_RATIO_CURRENT=0.10,GEOPACT_NAP_ANTICIPATE=0,GEOPACT_CRS=0,GEOPACT_CRS_REP=stride,GEOPACT_CRS_SKEL_FRAC=0.50,GEOPACT_BAM_MASS_ALPHA=4.0

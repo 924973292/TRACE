@@ -1,0 +1,118 @@
+task: task_v2_minicpm_o_acsubgraph_sync_drop_r20_media_valid
+dataset_path: json
+dataset_kwargs:
+  data_files: "data/merged_sorted_media_valid.json"
+test_split: train
+output_type: generate_until
+doc_to_visual: !function utils.omni_doc_to_visual
+doc_to_text: ""
+doc_to_messages: !function utils.unified_v2_doc_to_messages
+doc_to_target: !function utils.omni_doc_to_target
+process_results: !function utils.omni_process_results
+generation_kwargs:
+  max_new_tokens: 4096
+  temperature: 0
+  do_sample: false
+  token_prune_ratio: 0.20
+  token_prune_scope: current_media
+  token_prune_policy: sync_drop
+metric_list:
+  - metric: type_match
+    aggregation: !function utils.agentcpm_aggregate_type_match
+    higher_is_better: true
+  - metric: exact_match
+    aggregation: !function utils.agentcpm_aggregate_exact_match
+    higher_is_better: true
+  - metric: success_rate
+    aggregation: !function utils.agentcpm_aggregate_success_rate
+    higher_is_better: true
+  - metric: goal_progress
+    aggregation: !function utils.agentcpm_aggregate_goal_progress
+    higher_is_better: true
+  - metric: input_tokens
+    aggregation: !function utils.omni_aggregate_input_tokens
+    higher_is_better: false
+  - metric: original_input_tokens
+    aggregation: !function utils.omni_aggregate_original_input_tokens
+    higher_is_better: false
+  - metric: pruned_input_tokens
+    aggregation: !function utils.omni_aggregate_pruned_input_tokens
+    higher_is_better: false
+  - metric: actual_retention_ratio
+    aggregation: !function utils.omni_aggregate_actual_retention_ratio
+    higher_is_better: false
+  - metric: actual_media_retention_ratio
+    aggregation: !function utils.omni_aggregate_actual_media_retention_ratio
+    higher_is_better: false
+  - metric: media_tokens_before
+    aggregation: !function utils.omni_aggregate_media_tokens_before
+    higher_is_better: false
+  - metric: media_tokens_after
+    aggregation: !function utils.omni_aggregate_media_tokens_after
+    higher_is_better: false
+  - metric: media_tokens_pruned
+    aggregation: !function utils.omni_aggregate_media_tokens_pruned
+    higher_is_better: false
+  - metric: media_group_coverage
+    aggregation: !function utils.omni_aggregate_media_group_coverage
+    higher_is_better: true
+  - metric: anchor_recall
+    aggregation: !function utils.omni_aggregate_anchor_recall
+    higher_is_better: true
+  - metric: boundary_integrity
+    aggregation: !function utils.omni_aggregate_boundary_integrity
+    higher_is_better: true
+  - metric: event_continuity
+    aggregation: !function utils.omni_aggregate_event_continuity
+    higher_is_better: true
+  - metric: sync_coverage
+    aggregation: !function utils.omni_aggregate_sync_coverage
+    higher_is_better: true
+  - metric: topology_fidelity
+    aggregation: !function utils.omni_aggregate_topology_fidelity
+    higher_is_better: true
+  - metric: current_image_tokens_after
+    aggregation: !function utils.omni_aggregate_current_image_tokens_after
+    higher_is_better: false
+  - metric: video_tokens_after
+    aggregation: !function utils.omni_aggregate_video_tokens_after
+    higher_is_better: false
+  - metric: audio_tokens_after
+    aggregation: !function utils.omni_aggregate_audio_tokens_after
+    higher_is_better: false
+  - metric: total_tokens
+    aggregation: !function utils.omni_aggregate_total_tokens
+    higher_is_better: false
+  - metric: token_flops_tflops
+    aggregation: !function utils.omni_aggregate_token_flops_tflops
+    higher_is_better: false
+  - metric: e2e_latency_ms
+    aggregation: !function utils.omni_aggregate_e2e_latency_ms
+    higher_is_better: false
+  - metric: prefill_ms
+    aggregation: !function utils.omni_aggregate_prefill_ms
+    higher_is_better: false
+  - metric: decode_per_token_ms
+    aggregation: !function utils.omni_aggregate_decode_per_token_ms
+    higher_is_better: false
+  - metric: kv_cache_gb
+    aggregation: !function utils.omni_aggregate_kv_cache_gb
+    higher_is_better: false
+  - metric: gpu_memory_gb
+    aggregation: !function utils.omni_aggregate_gpu_memory_gb
+    higher_is_better: false
+  - metric: throughput_tokens_per_s
+    aggregation: !function utils.omni_aggregate_throughput_tokens_per_s
+    higher_is_better: true
+lmms_eval_specific_kwargs:
+  media_dir: "data/benchmark"
+  topo_cache_dir: "data/topo_cache_action_subgraph"
+  topo_retention_ratio: 0.20
+  topo_strict_token_pruning: true
+  coordinate_type: "normalized"
+metadata:
+  version: 2
+  matrix: action_critical_subgraph
+  retention_tier: r20
+  policy_family: sync_drop
+  policy_description: "Decouple video evidence from audio witnesses"

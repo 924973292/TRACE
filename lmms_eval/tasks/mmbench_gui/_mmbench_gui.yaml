@@ -1,0 +1,4 @@
+group: mmbench_gui
+task:
+  - task_mmbench_gui_l1_guiowl
+  - task_mmbench_gui_l2_guiowl

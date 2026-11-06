@@ -1,0 +1,9 @@
+# W33 2B replication phase C (android_control), pending launch
+android_control|task_android_control_qwen3_omni|baseline_full|pub_cdpruner|0.10|5|logs/xds2b_rep/android_control/cdpruner_c50_h10|-|MODEL_DIR=models/GUI-Owl-1.5-2B-Instruct,GEOPACT_PUBBASE_CURRENT=0.50
+android_control|task_android_control_qwen3_omni|baseline_full|pub_prumergeplus|0.10|5|logs/xds2b_rep/android_control/prumergeplus_c50_h10|-|MODEL_DIR=models/GUI-Owl-1.5-2B-Instruct,GEOPACT_PUBBASE_CURRENT=0.50
+android_control|task_android_control_qwen3_omni|baseline_full|pub_trim|0.10|5|logs/xds2b_rep/android_control/trim_c50_h10|-|MODEL_DIR=models/GUI-Owl-1.5-2B-Instruct,GEOPACT_PUBBASE_CURRENT=0.50
+android_control|task_android_control_qwen3_omni|baseline_full|pub_dart|0.50|5|logs/xds2b_rep/android_control/dart_c50_h10|-|MODEL_DIR=models/GUI-Owl-1.5-2B-Instruct,GEOPACT_DART_KEEP_HIST=0.10
+android_control|task_android_control_qwen3_omni|baseline_full|pub_cdpruner|0.05|5|logs/xds2b_rep/android_control/cdpruner_c25_h05|-|MODEL_DIR=models/GUI-Owl-1.5-2B-Instruct,GEOPACT_PUBBASE_CURRENT=0.25
+android_control|task_android_control_qwen3_omni|baseline_full|pub_prumergeplus|0.05|5|logs/xds2b_rep/android_control/prumergeplus_c25_h05|-|MODEL_DIR=models/GUI-Owl-1.5-2B-Instruct,GEOPACT_PUBBASE_CURRENT=0.25
+android_control|task_android_control_qwen3_omni|baseline_full|pub_trim|0.05|5|logs/xds2b_rep/android_control/trim_c25_h05|-|MODEL_DIR=models/GUI-Owl-1.5-2B-Instruct,GEOPACT_PUBBASE_CURRENT=0.25
+android_control|task_android_control_qwen3_omni|baseline_full|pub_dart|0.25|5|logs/xds2b_rep/android_control/dart_c25_h05|-|MODEL_DIR=models/GUI-Owl-1.5-2B-Instruct,GEOPACT_DART_KEEP_HIST=0.05

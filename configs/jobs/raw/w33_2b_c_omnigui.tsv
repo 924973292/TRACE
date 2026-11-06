@@ -1,0 +1,9 @@
+# W33 2B replication phase C (omnigui), pending launch
+omnigui|task_v2_qwen3_omni_novideo|baseline_full|pub_cdpruner|0.10|5|logs/xds2b_rep/omnigui/cdpruner_c50_h10|-|MODEL_DIR=models/GUI-Owl-1.5-2B-Instruct,GEOPACT_PUBBASE_CURRENT=0.50
+omnigui|task_v2_qwen3_omni_novideo|baseline_full|pub_prumergeplus|0.10|5|logs/xds2b_rep/omnigui/prumergeplus_c50_h10|-|MODEL_DIR=models/GUI-Owl-1.5-2B-Instruct,GEOPACT_PUBBASE_CURRENT=0.50
+omnigui|task_v2_qwen3_omni_novideo|baseline_full|pub_trim|0.10|5|logs/xds2b_rep/omnigui/trim_c50_h10|-|MODEL_DIR=models/GUI-Owl-1.5-2B-Instruct,GEOPACT_PUBBASE_CURRENT=0.50
+omnigui|task_v2_qwen3_omni_novideo|baseline_full|pub_dart|0.10|5|logs/xds2b_rep/omnigui/dart_c50_h10|-|MODEL_DIR=models/GUI-Owl-1.5-2B-Instruct,GEOPACT_PUBBASE_CURRENT=0.50
+omnigui|task_v2_qwen3_omni_novideo|baseline_full|pub_cdpruner|0.05|5|logs/xds2b_rep/omnigui/cdpruner_c25_h05|-|MODEL_DIR=models/GUI-Owl-1.5-2B-Instruct,GEOPACT_PUBBASE_CURRENT=0.25
+omnigui|task_v2_qwen3_omni_novideo|baseline_full|pub_prumergeplus|0.05|5|logs/xds2b_rep/omnigui/prumergeplus_c25_h05|-|MODEL_DIR=models/GUI-Owl-1.5-2B-Instruct,GEOPACT_PUBBASE_CURRENT=0.25
+omnigui|task_v2_qwen3_omni_novideo|baseline_full|pub_trim|0.05|5|logs/xds2b_rep/omnigui/trim_c25_h05|-|MODEL_DIR=models/GUI-Owl-1.5-2B-Instruct,GEOPACT_PUBBASE_CURRENT=0.25
+omnigui|task_v2_qwen3_omni_novideo|baseline_full|pub_dart|0.05|5|logs/xds2b_rep/omnigui/dart_c25_h05|-|MODEL_DIR=models/GUI-Owl-1.5-2B-Instruct,GEOPACT_PUBBASE_CURRENT=0.25

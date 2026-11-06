@@ -1,0 +1,3 @@
+android_control|task_android_control_qwen3_omni|baseline_full|pub_prunesid|0.10|5|logs/xds2b_rep/android_control/prunesid_c50_h10|-|MODEL_DIR=models/GUI-Owl-1.5-2B-Instruct,GEOPACT_PUBBASE_CURRENT=0.50
+mind2web_website|task_mind2web_qwen3_omni_website|baseline_full|pub_divprune|0.05|5|logs/xds2b_rep/mind2web_website/divprune_c25_h05|-|MODEL_DIR=models/GUI-Owl-1.5-2B-Instruct,GEOPACT_PUBBASE_CURRENT=0.25
+mind2web_website|task_mind2web_qwen3_omni_website|baseline_full|pub_prumergeplus|0.05|5|logs/xds2b_rep/mind2web_website/prumergeplus_c25_h05|-|MODEL_DIR=models/GUI-Owl-1.5-2B-Instruct,GEOPACT_PUBBASE_CURRENT=0.25

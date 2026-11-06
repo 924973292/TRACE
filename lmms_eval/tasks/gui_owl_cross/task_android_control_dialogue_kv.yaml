@@ -1,0 +1,27 @@
+task: task_android_control_dialogue_kv
+dataset_path: json
+dataset_kwargs:
+  data_files: "data/android_control/eval_steps.json"
+test_split: train
+output_type: generate_until
+doc_to_visual: !function process_results.android_control_doc_to_visual
+doc_to_text: ""
+doc_to_messages: !function process_results.android_control_dialogue_doc_to_messages
+doc_to_target: !function process_results.android_control_doc_to_target
+process_results: !function process_results.android_control_process_result
+generation_kwargs:
+  max_new_tokens: 4096
+  temperature: 0
+  do_sample: false
+metric_list:
+  - metric: android_control_exact_match
+    aggregation: !function process_results.android_control_aggregate_exact_match
+    higher_is_better: true
+lmms_eval_specific_kwargs:
+  media_dir: "data/android_control/images"
+  eval_android_control: true
+metadata:
+  version: 1
+  protocol: android_control_dialogue_kv_v1
+  model_baseline: GUI-Owl-1.5-8B-Instruct
+  supports_session_kv: true

@@ -1,0 +1,31 @@
+# W49 NEO scoring-form and query-construction necessity, 8B.
+#
+# WHY. Eq. eq:qd states the ordering rule as log a_j + log d_j^2 and
+# Eq. eq:likelihood builds the query matrix as [normalized mean; instruction
+# token rows] scored by amax. Both read as derivations, but the alternatives
+# were only ever screened on 2B at 100/500 steps (see the docstring of
+# geopact_qd_selector._bam_select_order). No 8B full-set measurement exists, so
+# "why is the log coefficient 1 and not 2" currently has no answer.
+#
+# ARMS.
+#   base      adopted: log a + log d^2, query = [mean; tokens], amax pooling
+#   sharpa    GEOPACT_BAM_SHARP_A=1     -> DPP-square score 2 log a + log d^2
+#   lse       GEOPACT_BAM_QUERY_LSE=1   -> log-mean-exp instead of amax
+#   meanonly  TURN_QUERY_TOKENS=0, MEANROW=0 -> pure mean-pooled query
+#   tokonly   TURN_QUERY_TOKENS=1, MEANROW=0 -> token rows only, no mean anchor
+#
+# CAUTION. The v3_nap branch exports these with ${VAR:-default} (preserve-if-
+# set), so passing 0 through EXTRA_ENV works. The v3_bam branch exports them
+# unconditionally and would silently override the arm (the round-4 blanket-unset
+# bug), so every row here must use v3_nap.
+#
+# ANCHOR. ScreenSpot-v2 r=10%, copied from w19b_p18304.tsv
+# (logs/xds8b_tune/screenspot_v2/covdose50_r10, 73.90). base re-measures it in
+# this queue so deltas read against a twin, not a legacy number.
+#
+# BENCHMARK|TASK|TRACK|EXP_ARM|RATIO|HIST_N|OUT|LIMIT|EXTRA_ENV
+screenspot_v2|task_screenspot_v2_guiowl|abc_r10|v3_nap|0.10|-|logs/w49_neo/screenspot_v2/base_r10|-|MODEL_DIR=models/GUI-Owl-1.5-8B-Instruct,GEOPACT_RATIO_CURRENT=0.10,GEOPACT_BAM_ALPHA_CAL=1,GEOPACT_NAP_ANTICIPATE=0,GEOPACT_CRS=1,GEOPACT_CRS_REP=stride,GEOPACT_CRS_SKEL_FRAC=0.50
+screenspot_v2|task_screenspot_v2_guiowl|abc_r10|v3_nap|0.10|-|logs/w49_neo/screenspot_v2/sharpa_r10|-|MODEL_DIR=models/GUI-Owl-1.5-8B-Instruct,GEOPACT_RATIO_CURRENT=0.10,GEOPACT_BAM_ALPHA_CAL=1,GEOPACT_NAP_ANTICIPATE=0,GEOPACT_CRS=1,GEOPACT_CRS_REP=stride,GEOPACT_CRS_SKEL_FRAC=0.50,GEOPACT_BAM_SHARP_A=1
+screenspot_v2|task_screenspot_v2_guiowl|abc_r10|v3_nap|0.10|-|logs/w49_neo/screenspot_v2/lse_r10|-|MODEL_DIR=models/GUI-Owl-1.5-8B-Instruct,GEOPACT_RATIO_CURRENT=0.10,GEOPACT_BAM_ALPHA_CAL=1,GEOPACT_NAP_ANTICIPATE=0,GEOPACT_CRS=1,GEOPACT_CRS_REP=stride,GEOPACT_CRS_SKEL_FRAC=0.50,GEOPACT_BAM_QUERY_LSE=1
+screenspot_v2|task_screenspot_v2_guiowl|abc_r10|v3_nap|0.10|-|logs/w49_neo/screenspot_v2/meanonly_r10|-|MODEL_DIR=models/GUI-Owl-1.5-8B-Instruct,GEOPACT_RATIO_CURRENT=0.10,GEOPACT_BAM_ALPHA_CAL=1,GEOPACT_NAP_ANTICIPATE=0,GEOPACT_CRS=1,GEOPACT_CRS_REP=stride,GEOPACT_CRS_SKEL_FRAC=0.50,GEOPACT_TURN_QUERY_TOKENS=0,GEOPACT_TURN_QUERY_MEANROW=0
+screenspot_v2|task_screenspot_v2_guiowl|abc_r10|v3_nap|0.10|-|logs/w49_neo/screenspot_v2/tokonly_r10|-|MODEL_DIR=models/GUI-Owl-1.5-8B-Instruct,GEOPACT_RATIO_CURRENT=0.10,GEOPACT_BAM_ALPHA_CAL=1,GEOPACT_NAP_ANTICIPATE=0,GEOPACT_CRS=1,GEOPACT_CRS_REP=stride,GEOPACT_CRS_SKEL_FRAC=0.50,GEOPACT_TURN_QUERY_TOKENS=1,GEOPACT_TURN_QUERY_MEANROW=0

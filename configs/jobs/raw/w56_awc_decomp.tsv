@@ -1,0 +1,32 @@
+# W56: decompose the multi-step AWC/NCR gain between its two passes, plus a
+# retirement-dose contrast.
+#
+# WHY. tab:ablation-main's checkmark ladder turns BOTH NCR passes on together
+# on multi-step, while Sec 4.5(2) claims each pass serves its own budget
+# geometry. No archived arm ever ran one pass alone (grep over all job TSVs:
+# zero rows with CRS=1 and CRS_NESTED unset/0 on omnigui/mind2web). The
+# operators gate on independent flags (crs_enabled vs crs_nested_enabled;
+# geopact_vl_hook.py L2993 checks only the nested flag), so single-pass twins
+# are well defined.
+#
+# ANCHORS. The W55-verified true tight-budget anchors: cur_only flips only
+# GEOPACT_CRS_NESTED to 0, ret_only flips only GEOPACT_CRS to 0. Adopted
+# references for reading deltas: OmniGUI a2cap_c25_h05 (GP 24.04, EM 43.08),
+# M2W a6nocov_c25_h05 pooled Step SR 34.20; the no-AWC rung of the ladder is
+# 19.36 / 26.89.
+#
+# DOSE. nested_frac10/20 vary only GEOPACT_CRS_NESTED_FRAC against the OmniGUI
+# anchor's adopted 0.05, giving a three-point retirement dose response to
+# mirror the current-frame curve in fig:dose.
+#
+# BENCHMARK|TASK|TRACK|EXP_ARM|RATIO|HIST_N|OUT|LIMIT|EXTRA_ENV
+omnigui|task_v2_qwen3_omni_novideo|abc_r10|v3_nap|0.05|5|logs/w56_decomp/omnigui/cur_only_c25_h05|-|MODEL_DIR=models/GUI-Owl-1.5-8B-Instruct,GEOPACT_RATIO_CURRENT=0.25,GEOPACT_BAM_ALPHA_CAL=1,GEOPACT_NAP_ANTICIPATE=0,GEOPACT_RECTIFY_PREFETCH=1,GEOPACT_CRS=1,GEOPACT_CRS_REP=stride,GEOPACT_CRS_NESTED=0,GEOPACT_BAM_MASS_ALPHA=2.0
+omnigui|task_v2_qwen3_omni_novideo|abc_r10|v3_nap|0.05|5|logs/w56_decomp/omnigui/ret_only_c25_h05|-|MODEL_DIR=models/GUI-Owl-1.5-8B-Instruct,GEOPACT_RATIO_CURRENT=0.25,GEOPACT_BAM_ALPHA_CAL=1,GEOPACT_NAP_ANTICIPATE=0,GEOPACT_RECTIFY_PREFETCH=1,GEOPACT_CRS=0,GEOPACT_CRS_NESTED=1,GEOPACT_CRS_NESTED_FRAC=0.05,GEOPACT_BAM_MASS_ALPHA=2.0
+mind2web_task|task_mind2web_qwen3_omni_task|abc_r10|v3_nap|0.05|5|logs/w56_decomp/mind2web_task/cur_only_c25_h05|-|MODEL_DIR=models/GUI-Owl-1.5-8B-Instruct,GEOPACT_RATIO_CURRENT=0.25,GEOPACT_NAP_ANTICIPATE=0,GEOPACT_RECTIFY_PREFETCH=1,GEOPACT_CRS=1,GEOPACT_CRS_REP=stride,GEOPACT_CRS_NESTED=0,GEOPACT_BAM_MASS_ALPHA=6.0
+mind2web_task|task_mind2web_qwen3_omni_task|abc_r10|v3_nap|0.05|5|logs/w56_decomp/mind2web_task/ret_only_c25_h05|-|MODEL_DIR=models/GUI-Owl-1.5-8B-Instruct,GEOPACT_RATIO_CURRENT=0.25,GEOPACT_NAP_ANTICIPATE=0,GEOPACT_RECTIFY_PREFETCH=1,GEOPACT_CRS=0,GEOPACT_CRS_NESTED=1,GEOPACT_CRS_NESTED_FRAC=0.05,GEOPACT_BAM_MASS_ALPHA=6.0
+mind2web_website|task_mind2web_qwen3_omni_website|abc_r10|v3_nap|0.05|5|logs/w56_decomp/mind2web_website/cur_only_c25_h05|-|MODEL_DIR=models/GUI-Owl-1.5-8B-Instruct,GEOPACT_RATIO_CURRENT=0.25,GEOPACT_NAP_ANTICIPATE=0,GEOPACT_RECTIFY_PREFETCH=1,GEOPACT_CRS=1,GEOPACT_CRS_REP=stride,GEOPACT_CRS_NESTED=0,GEOPACT_BAM_MASS_ALPHA=6.0
+mind2web_website|task_mind2web_qwen3_omni_website|abc_r10|v3_nap|0.05|5|logs/w56_decomp/mind2web_website/ret_only_c25_h05|-|MODEL_DIR=models/GUI-Owl-1.5-8B-Instruct,GEOPACT_RATIO_CURRENT=0.25,GEOPACT_NAP_ANTICIPATE=0,GEOPACT_RECTIFY_PREFETCH=1,GEOPACT_CRS=0,GEOPACT_CRS_NESTED=1,GEOPACT_CRS_NESTED_FRAC=0.05,GEOPACT_BAM_MASS_ALPHA=6.0
+mind2web_domain|task_mind2web_qwen3_omni_domain|abc_r10|v3_nap|0.05|5|logs/w56_decomp/mind2web_domain/cur_only_c25_h05|-|MODEL_DIR=models/GUI-Owl-1.5-8B-Instruct,GEOPACT_RATIO_CURRENT=0.25,GEOPACT_NAP_ANTICIPATE=0,GEOPACT_RECTIFY_PREFETCH=1,GEOPACT_CRS=1,GEOPACT_CRS_REP=stride,GEOPACT_CRS_NESTED=0,GEOPACT_BAM_MASS_ALPHA=6.0
+mind2web_domain|task_mind2web_qwen3_omni_domain|abc_r10|v3_nap|0.05|5|logs/w56_decomp/mind2web_domain/ret_only_c25_h05|-|MODEL_DIR=models/GUI-Owl-1.5-8B-Instruct,GEOPACT_RATIO_CURRENT=0.25,GEOPACT_NAP_ANTICIPATE=0,GEOPACT_RECTIFY_PREFETCH=1,GEOPACT_CRS=0,GEOPACT_CRS_NESTED=1,GEOPACT_CRS_NESTED_FRAC=0.05,GEOPACT_BAM_MASS_ALPHA=6.0
+omnigui|task_v2_qwen3_omni_novideo|abc_r10|v3_nap|0.05|5|logs/w56_decomp/omnigui/nested_frac10_c25_h05|-|MODEL_DIR=models/GUI-Owl-1.5-8B-Instruct,GEOPACT_RATIO_CURRENT=0.25,GEOPACT_BAM_ALPHA_CAL=1,GEOPACT_NAP_ANTICIPATE=0,GEOPACT_RECTIFY_PREFETCH=1,GEOPACT_CRS=1,GEOPACT_CRS_REP=stride,GEOPACT_CRS_NESTED=1,GEOPACT_CRS_NESTED_FRAC=0.10,GEOPACT_BAM_MASS_ALPHA=2.0
+omnigui|task_v2_qwen3_omni_novideo|abc_r10|v3_nap|0.05|5|logs/w56_decomp/omnigui/nested_frac20_c25_h05|-|MODEL_DIR=models/GUI-Owl-1.5-8B-Instruct,GEOPACT_RATIO_CURRENT=0.25,GEOPACT_BAM_ALPHA_CAL=1,GEOPACT_NAP_ANTICIPATE=0,GEOPACT_RECTIFY_PREFETCH=1,GEOPACT_CRS=1,GEOPACT_CRS_REP=stride,GEOPACT_CRS_NESTED=1,GEOPACT_CRS_NESTED_FRAC=0.20,GEOPACT_BAM_MASS_ALPHA=2.0

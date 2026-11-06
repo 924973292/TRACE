@@ -1,0 +1,140 @@
+task: task_v2_qwen3_omni_novideo_task_repeat
+dataset_path: json
+dataset_kwargs:
+  data_files: "data/merged_sorted.json"
+test_split: train
+output_type: generate_until
+doc_to_visual: !function utils.omni_doc_to_visual
+doc_to_text: ""
+doc_to_messages: !function utils.qwen_doc_to_messages
+doc_to_target: !function utils.omni_doc_to_target
+process_results: !function utils_eval_extensions.omni_process_results
+generation_kwargs:
+  max_new_tokens: 4096
+  temperature: 0
+  do_sample: false
+metric_list:
+  - metric: type_match
+    aggregation: !function utils_eval_extensions.omni_aggregate_type_match
+    higher_is_better: true
+  - metric: exact_match
+    aggregation: !function utils_eval_extensions.omni_aggregate_exact_match
+    higher_is_better: true
+  - metric: success_rate
+    aggregation: !function utils_eval_extensions.omni_aggregate_success_rate
+    higher_is_better: true
+  - metric: goal_progress
+    aggregation: !function utils_eval_extensions.omni_aggregate_goal_progress
+    higher_is_better: true
+  - metric: e2e_latency_ms
+    aggregation: !function utils_eval_extensions.omni_aggregate_e2e_latency_ms
+    higher_is_better: false
+  - metric: ttft_ms
+    aggregation: !function utils_eval_extensions.omni_aggregate_ttft_ms
+    higher_is_better: false
+  - metric: vision_prefill_ms
+    aggregation: !function utils_eval_extensions.omni_aggregate_vision_prefill_ms
+    higher_is_better: false
+  - metric: pruning_ms
+    aggregation: !function utils_eval_extensions.omni_aggregate_pruning_ms
+    higher_is_better: false
+  - metric: llm_prefill_ms
+    aggregation: !function utils_eval_extensions.omni_aggregate_llm_prefill_ms
+    higher_is_better: false
+  - metric: decode_latency_ms
+    aggregation: !function utils_eval_extensions.omni_aggregate_decode_latency_ms
+    higher_is_better: false
+  - metric: preprocess_ms
+    aggregation: !function utils_eval_extensions.omni_aggregate_preprocess_ms
+    higher_is_better: false
+  - metric: prefill_ms
+    aggregation: !function utils_eval_extensions.omni_aggregate_prefill_ms
+    higher_is_better: false
+  - metric: vlm_prefill_ms
+    aggregation: !function utils_eval_extensions.omni_aggregate_vlm_prefill_ms
+    higher_is_better: false
+  - metric: llm_prefill_forward_ms
+    aggregation: !function utils_eval_extensions.omni_aggregate_llm_prefill_forward_ms
+    higher_is_better: false
+  - metric: generation_ms
+    aggregation: !function utils_eval_extensions.omni_aggregate_generation_ms
+    higher_is_better: false
+  - metric: decode_total_ms
+    aggregation: !function utils_eval_extensions.omni_aggregate_decode_total_ms
+    higher_is_better: false
+  - metric: decode_per_token_ms
+    aggregation: !function utils_eval_extensions.omni_aggregate_decode_per_token_ms
+    higher_is_better: false
+  - metric: throughput_tokens_per_s
+    aggregation: !function utils_eval_extensions.omni_aggregate_throughput_tokens_per_s
+    higher_is_better: true
+  - metric: input_tokens
+    aggregation: !function utils_eval_extensions.omni_aggregate_input_tokens
+    higher_is_better: false
+  - metric: output_tokens
+    aggregation: !function utils_eval_extensions.omni_aggregate_output_tokens
+    higher_is_better: false
+  - metric: total_tokens
+    aggregation: !function utils_eval_extensions.omni_aggregate_total_tokens
+    higher_is_better: false
+  - metric: vision_tokens
+    aggregation: !function utils_eval_extensions.omni_aggregate_vision_tokens
+    higher_is_better: false
+  - metric: history_tokens
+    aggregation: !function utils_eval_extensions.omni_aggregate_history_tokens
+    higher_is_better: false
+  - metric: tokens_before_pruning
+    aggregation: !function utils_eval_extensions.omni_aggregate_tokens_before_pruning
+    higher_is_better: false
+  - metric: tokens_after_pruning
+    aggregation: !function utils_eval_extensions.omni_aggregate_tokens_after_pruning
+    higher_is_better: false
+  - metric: token_reduction_ratio
+    aggregation: !function utils_eval_extensions.omni_aggregate_token_reduction_ratio
+    higher_is_better: false
+  - metric: peak_gpu_memory_mb
+    aggregation: !function utils_eval_extensions.omni_aggregate_peak_gpu_memory_mb
+    higher_is_better: false
+  - metric: average_gpu_memory_mb
+    aggregation: !function utils_eval_extensions.omni_aggregate_average_gpu_memory_mb
+    higher_is_better: false
+  - metric: episode_sum_e2e_latency_ms
+    aggregation: !function utils_eval_extensions.omni_aggregate_episode_sum_e2e_latency_ms
+    higher_is_better: false
+  - metric: episode_mean_step_e2e_latency_ms
+    aggregation: !function utils_eval_extensions.omni_aggregate_episode_mean_step_e2e_latency_ms
+    higher_is_better: false
+  - metric: episode_sum_generation_ms
+    aggregation: !function utils_eval_extensions.omni_aggregate_episode_sum_generation_ms
+    higher_is_better: false
+  - metric: episode_sum_input_tokens
+    aggregation: !function utils_eval_extensions.omni_aggregate_episode_sum_input_tokens
+    higher_is_better: false
+  - metric: episode_max_gpu_memory_gb
+    aggregation: !function utils_eval_extensions.omni_aggregate_episode_max_gpu_memory_gb
+    higher_is_better: false
+  - metric: episode_sum_vision_prefill_ms
+    aggregation: !function utils_eval_extensions.omni_aggregate_episode_sum_vision_prefill_ms
+    higher_is_better: false
+  - metric: episode_sum_pruning_ms
+    aggregation: !function utils_eval_extensions.omni_aggregate_episode_sum_pruning_ms
+    higher_is_better: false
+  - metric: episode_sum_llm_prefill_ms
+    aggregation: !function utils_eval_extensions.omni_aggregate_episode_sum_llm_prefill_ms
+    higher_is_better: false
+  - metric: episode_sum_decode_latency_ms
+    aggregation: !function utils_eval_extensions.omni_aggregate_episode_sum_decode_latency_ms
+    higher_is_better: false
+  - metric: episode_max_peak_gpu_memory_mb
+    aggregation: !function utils_eval_extensions.omni_aggregate_episode_max_peak_gpu_memory_mb
+    higher_is_better: false
+lmms_eval_specific_kwargs:
+  media_dir: "data/benchmark"
+  coordinate_type: "normalized"
+  include_video: false
+  include_audio: false
+  qwen_repeat_task_in_history: true
+  qwen_include_history: true
+metadata:
+  version: 1
+  protocol: novideo_history_task_repeat

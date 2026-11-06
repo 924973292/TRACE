@@ -1,0 +1,24 @@
+# W53-C: tab:ablation-modules panel (a) NEO factor removal, on the two missing
+# Mind2Web splits.
+#
+# WHY. Panel (a)'s "M2W" column is computed from mind2web_task only, while the
+# main multi-step table reports Mind2Web pooled over three cross-splits. The two
+# therefore disagree about what "Mind2Web" denotes. Running website and domain
+# lets the ablation column adopt the same pooled definition, which also raises the
+# step count behind the two currently-descriptive factor deltas (nodiv p=0.058,
+# unifa p=0.142) and gives them a chance to resolve.
+#
+# ANCHORS. The adopted M2W twin triple is the a6nocov lineage at the tight budget:
+#   base  <- xds8b_tune/mind2web_task/a6nocov_c25_h05        (alpha 6.0)
+#   nodiv <- xds8b_abl2/mind2web_task/nodiv_a6nocov_c25_h05  (+NO_DIVERSITY)
+#   unifa <- xds8b_abl2/mind2web_task/unifa_a6nocov_c25_h05  (+UNIFORM_A, the
+#            mass-removal twin that also carries the prior-necessity row)
+# Each row below is byte-identical to its task counterpart except BENCHMARK/TASK/OUT.
+#
+# BENCHMARK|TASK|TRACK|EXP_ARM|RATIO|HIST_N|OUT|LIMIT|EXTRA_ENV
+mind2web_website|task_mind2web_qwen3_omni_website|abc_r10|v3_nap|0.05|5|logs/w53_abl4a/mind2web_website/base_a6nocov_c25_h05|-|MODEL_DIR=models/GUI-Owl-1.5-8B-Instruct,GEOPACT_RATIO_CURRENT=0.25,GEOPACT_NAP_ANTICIPATE=0,GEOPACT_RECTIFY_PREFETCH=1,GEOPACT_CRS=1,GEOPACT_CRS_REP=stride,GEOPACT_CRS_NESTED=1,GEOPACT_CRS_NESTED_FRAC=0.05,GEOPACT_BAM_MASS_ALPHA=6.0
+mind2web_website|task_mind2web_qwen3_omni_website|abc_r10|v3_nap|0.05|5|logs/w53_abl4a/mind2web_website/nodiv_a6nocov_c25_h05|-|MODEL_DIR=models/GUI-Owl-1.5-8B-Instruct,GEOPACT_RATIO_CURRENT=0.25,GEOPACT_NAP_ANTICIPATE=0,GEOPACT_RECTIFY_PREFETCH=1,GEOPACT_CRS=1,GEOPACT_CRS_REP=stride,GEOPACT_CRS_NESTED=1,GEOPACT_CRS_NESTED_FRAC=0.05,GEOPACT_BAM_MASS_ALPHA=6.0,GEOPACT_BAM_NO_DIVERSITY=1
+mind2web_website|task_mind2web_qwen3_omni_website|abc_r10|v3_nap|0.05|5|logs/w53_abl4a/mind2web_website/unifa_a6nocov_c25_h05|-|MODEL_DIR=models/GUI-Owl-1.5-8B-Instruct,GEOPACT_RATIO_CURRENT=0.25,GEOPACT_NAP_ANTICIPATE=0,GEOPACT_RECTIFY_PREFETCH=1,GEOPACT_CRS=1,GEOPACT_CRS_REP=stride,GEOPACT_CRS_NESTED=1,GEOPACT_CRS_NESTED_FRAC=0.05,GEOPACT_BAM_MASS_ALPHA=6.0,GEOPACT_BAM_UNIFORM_A=1
+mind2web_domain|task_mind2web_qwen3_omni_domain|abc_r10|v3_nap|0.05|5|logs/w53_abl4a/mind2web_domain/base_a6nocov_c25_h05|-|MODEL_DIR=models/GUI-Owl-1.5-8B-Instruct,GEOPACT_RATIO_CURRENT=0.25,GEOPACT_NAP_ANTICIPATE=0,GEOPACT_RECTIFY_PREFETCH=1,GEOPACT_CRS=1,GEOPACT_CRS_REP=stride,GEOPACT_CRS_NESTED=1,GEOPACT_CRS_NESTED_FRAC=0.05,GEOPACT_BAM_MASS_ALPHA=6.0
+mind2web_domain|task_mind2web_qwen3_omni_domain|abc_r10|v3_nap|0.05|5|logs/w53_abl4a/mind2web_domain/nodiv_a6nocov_c25_h05|-|MODEL_DIR=models/GUI-Owl-1.5-8B-Instruct,GEOPACT_RATIO_CURRENT=0.25,GEOPACT_NAP_ANTICIPATE=0,GEOPACT_RECTIFY_PREFETCH=1,GEOPACT_CRS=1,GEOPACT_CRS_REP=stride,GEOPACT_CRS_NESTED=1,GEOPACT_CRS_NESTED_FRAC=0.05,GEOPACT_BAM_MASS_ALPHA=6.0,GEOPACT_BAM_NO_DIVERSITY=1
+mind2web_domain|task_mind2web_qwen3_omni_domain|abc_r10|v3_nap|0.05|5|logs/w53_abl4a/mind2web_domain/unifa_a6nocov_c25_h05|-|MODEL_DIR=models/GUI-Owl-1.5-8B-Instruct,GEOPACT_RATIO_CURRENT=0.25,GEOPACT_NAP_ANTICIPATE=0,GEOPACT_RECTIFY_PREFETCH=1,GEOPACT_CRS=1,GEOPACT_CRS_REP=stride,GEOPACT_CRS_NESTED=1,GEOPACT_CRS_NESTED_FRAC=0.05,GEOPACT_BAM_MASS_ALPHA=6.0,GEOPACT_BAM_UNIFORM_A=1

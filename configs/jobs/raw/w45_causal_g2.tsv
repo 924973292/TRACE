@@ -1,0 +1,2 @@
+# W43-B replay: omni ours tight + restore overrides (same config as w45_ret2 tight, no dump).
+omnigui|task_v2_qwen3_omni_novideo|abc_r10|v3_nap|0.05|5|logs/w45_causal/omni_tight_restore_run|1000|MODEL_DIR=models/GUI-Owl-1.5-8B-Instruct,GEOPACT_RATIO_CURRENT=0.25,GEOPACT_BAM_ALPHA_CAL=1,GEOPACT_NAP_ANTICIPATE=0,GEOPACT_RECTIFY_PREFETCH=1,GEOPACT_CRS=1,GEOPACT_CRS_REP=stride,GEOPACT_CRS_NESTED=1,GEOPACT_CRS_NESTED_FRAC=0.05,GEOPACT_BAM_MASS_ALPHA=2.0,GEOPACT_KEEP_OVERRIDE=logs/w45_causal/omni_tight_restore.jsonl
